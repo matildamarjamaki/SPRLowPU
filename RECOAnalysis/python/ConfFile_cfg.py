@@ -11,9 +11,15 @@ process.maxEvents = cms.untracked.PSet(
 #
 #
 #
+# process.source = cms.Source("PoolSource",
+#    fileNames = cms.untracked.vstring(
+#       'file:root://hip-cms-se.csc.fi//store/user/nbinnorj/RAWToRECO_2025_v0p3/CRABOUTPUT/SpecialZeroBias1/Run2025G_PromptRECO_v1_LowPUJSON_RAWToRECO_2025_v0p3/260320_213619/0000/RECO_1.root'
+#    )
+# )
+
 process.source = cms.Source("PoolSource",
    fileNames = cms.untracked.vstring(
-      'file:root://hip-cms-se.csc.fi//store/user/nbinnorj/RAWToRECO_2025_v0p3/CRABOUTPUT/SpecialZeroBias1/Run2025G_PromptRECO_v1_LowPUJSON_RAWToRECO_2025_v0p3/260320_213619/0000/RECO_1.root'
+      'root://hip-cms-se.csc.fi//store/user/nbinnorj/RAWToRECO_2025_v0p3/CRABOUTPUT/SpecialZeroBias1/Run2025G_PromptRECO_v1_LowPUJSON_RAWToRECO_2025_v0p3/260320_213619/0000/RECO_1.root'
    )
 )
 
