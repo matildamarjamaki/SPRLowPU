@@ -56,10 +56,26 @@ def main(txtFileName, nGroupFiles=10):
 if __name__ == "__main__":
 
   txtFiles=[
-    ("Data26C_LowPU1or2_EphemeralZeroBias0",20),
-    ("Data26C_LowPU1or2_EphemeralZeroBias1",20),
-    ("Data26C_LowPU1or2_EphemeralZeroBias2",20),
-    ("Data26C_LowPU1or2_EphemeralZeroBias3",20),
+    ("MC26Winter_Pi_E-0p2to200",50),
+    ("MC26Winter_Pi_E-0p2to10",50),
+    ("Data26C_LowPU1or2_EphemeralZeroBias0",10),
+    ("Data26C_LowPU1or2_EphemeralZeroBias1",10),
+    ("Data26C_LowPU1or2_EphemeralZeroBias2",10),
+    ("Data26C_LowPU1or2_EphemeralZeroBias3",10),
+    ("Data26C_LowPU1or2_EphemeralZeroBias4",10),
+    ("Data26C_LowPU1or2_EphemeralZeroBias5",10),
+    ("Data26C_LowPU1or2_EphemeralZeroBias6",10),
+    ("Data26C_LowPU1or2_EphemeralZeroBias7",10),
+    ("Data24B_SpecialZeroBias0",20),
+    ("Data24B_SpecialZeroBias1",20),
+    ("Data24B_SpecialZeroBias2",20),
+    ("Data24B_SpecialZeroBias3",20),
+    ("Data24B_SpecialZeroBias4",20),
+    ("Data24B_SpecialZeroBias5",20),
+    ("Data24B_SpecialZeroBias6",20),
+    ("Data24B_SpecialZeroBias7",20),
+    ("Data24B_SpecialZeroBias8",20),
+    ("Data24B_SpecialZeroBias9",20),
   ]
 
   for txtFile in txtFiles:

@@ -45,6 +45,20 @@ datasetDict = {
   "Data26C_LowPU1or2_EphemeralZeroBias1" :"/EphemeralZeroBias1/nbinnorj-Run2026C_PromptRECO_v1_LowPU1or2_RAWToRECO_2026_v0p1-4ae2899d6667910a95ae225f64732522/USER",
   "Data26C_LowPU1or2_EphemeralZeroBias2" :"/EphemeralZeroBias2/nbinnorj-Run2026C_PromptRECO_v1_LowPU1or2_RAWToRECO_2026_v0p1-4ae2899d6667910a95ae225f64732522/USER",
   "Data26C_LowPU1or2_EphemeralZeroBias3" :"/EphemeralZeroBias3/nbinnorj-Run2026C_PromptRECO_v1_LowPU1or2_RAWToRECO_2026_v0p1-4ae2899d6667910a95ae225f64732522/USER",
+  "Data26C_LowPU1or2_EphemeralZeroBias4" :"/EphemeralZeroBias0/nbinnorj-Run2026C_PromptRECO_v1_LowPU1or2_RAWToRECO_2026_v0p1-4ae2899d6667910a95ae225f64732522/USER",
+  "Data26C_LowPU1or2_EphemeralZeroBias5" :"/EphemeralZeroBias1/nbinnorj-Run2026C_PromptRECO_v1_LowPU1or2_RAWToRECO_2026_v0p1-4ae2899d6667910a95ae225f64732522/USER",
+  "Data26C_LowPU1or2_EphemeralZeroBias6" :"/EphemeralZeroBias2/nbinnorj-Run2026C_PromptRECO_v1_LowPU1or2_RAWToRECO_2026_v0p1-4ae2899d6667910a95ae225f64732522/USER",
+  "Data26C_LowPU1or2_EphemeralZeroBias7" :"/EphemeralZeroBias3/nbinnorj-Run2026C_PromptRECO_v1_LowPU1or2_RAWToRECO_2026_v0p1-4ae2899d6667910a95ae225f64732522/USER",
+  # "Data24B_SpecialZeroBias0" : "/SpecialZeroBias0/nbinnorj-Run2024B_RECO_v1_CDEReproc_RAWToRECO_2024_v0p1-f98df8f6496d3e143bda6419c8a8fad9/USER",
+  # "Data24B_SpecialZeroBias1" : "/SpecialZeroBias1/nbinnorj-Run2024B_RECO_v1_CDEReproc_RAWToRECO_2024_v0p1-f98df8f6496d3e143bda6419c8a8fad9/USER",
+  # "Data24B_SpecialZeroBias2" : "/SpecialZeroBias2/nbinnorj-Run2024B_RECO_v1_CDEReproc_RAWToRECO_2024_v0p1-f98df8f6496d3e143bda6419c8a8fad9/USER",
+  # "Data24B_SpecialZeroBias3" : "/SpecialZeroBias3/nbinnorj-Run2024B_RECO_v1_CDEReproc_RAWToRECO_2024_v0p1-f98df8f6496d3e143bda6419c8a8fad9/USER",
+  # "Data24B_SpecialZeroBias4" : "/SpecialZeroBias4/nbinnorj-Run2024B_RECO_v1_CDEReproc_RAWToRECO_2024_v0p1-f98df8f6496d3e143bda6419c8a8fad9/USER",
+  # "Data24B_SpecialZeroBias5" : "/SpecialZeroBias5/nbinnorj-Run2024B_RECO_v1_CDEReproc_RAWToRECO_2024_v0p1-f98df8f6496d3e143bda6419c8a8fad9/USER",
+  # "Data24B_SpecialZeroBias6" : "/SpecialZeroBias6/nbinnorj-Run2024B_RECO_v1_CDEReproc_RAWToRECO_2024_v0p1-f98df8f6496d3e143bda6419c8a8fad9/USER",
+  # "Data24B_SpecialZeroBias7" : "/SpecialZeroBias7/nbinnorj-Run2024B_RECO_v1_CDEReproc_RAWToRECO_2024_v0p1-f98df8f6496d3e143bda6419c8a8fad9/USER",
+  # "Data24B_SpecialZeroBias8" : "/SpecialZeroBias8/nbinnorj-Run2024B_RECO_v1_CDEReproc_RAWToRECO_2024_v0p1-f98df8f6496d3e143bda6419c8a8fad9/USER",
+  # "Data24B_SpecialZeroBias9" : "/SpecialZeroBias9/nbinnorj-Run2024B_RECO_v1_CDEReproc_RAWToRECO_2024_v0p1-f98df8f6496d3e143bda6419c8a8fad9/USER",
 }
 
 
