@@ -35,6 +35,13 @@
 #include <utility>
 #include <vector>
 
+namespace {
+const double trkPBins[] = {3.0,  3.3,  3.6,  3.9,  4.2,  4.6,  5.0,  5.5,  6.0,  6.6,  7.2,
+                           7.9,  8.6,  9.3,  10.0, 11.0, 12.0, 13.0, 14.0, 15.0, 16.5, 18.0,
+                           20.0, 22.0, 25.0, 30.0, 35.0, 40.0, 45.0, 55.0, 65.0, 80.0, 100.0};
+constexpr int nTrkPBins = sizeof(trkPBins) / sizeof(trkPBins[0]) - 1;
+}  // namespace
+
 class SPRLowPUDataAnalyzer : public edm::one::EDAnalyzer<edm::one::SharedResources, edm::one::WatchRuns> {
 public:
   explicit SPRLowPUDataAnalyzer(edm::ParameterSet const& config);
@@ -61,10 +68,10 @@ private:
   bool isIsolationNeighbor(reco::Track const& track) const;
   std::pair<double, double> chargedIsolation(std::size_t candidateIndex,
                                              reco::TrackCollection const& tracks,
-                                             reco::Vertex const& leadingVertex) const;
+                                             reco::Vertex const* leadingVertex) const;
   MuonMatchResult matchMuon(reco::TrackRef const& trackRef,
                             reco::MuonCollection const& muons,
-                            reco::Vertex const& leadingVertex) const;
+                            reco::Vertex const* leadingVertex) const;
   void fillPFLinkingDiagnostics(reco::TrackRef const& trackRef,
                                 reco::Track const& track,
                                 reco::PFBlockCollection const& pfBlocks,
@@ -79,6 +86,7 @@ private:
 
   PFEnergyCalibration pfEnergyCalibration_;
 
+  bool requirePrimaryVertex_;
   double minVertexNdof_;
   double maxVertexAbsZ_;
   double maxVertexRho_;
@@ -109,7 +117,9 @@ private:
   TH1D* leadingVertexRho_;
   TH1D* leadingVertexNdof_;
   TH1D* selectedTrackP_;
+  TH1D* selectedTrackPVarBins_;
   TH1D* selectedTrackPt_;
+  TH1D* selectedTrackPtVarBins_;
   TH1D* selectedTrackEta_;
   TH1D* selectedTrackPhi_;
   TH1D* selectedTrackNormalizedChi2_;
@@ -124,8 +134,11 @@ private:
   TH1D* muonIDSummary_;
   TH1D* selectedTrackMuonCategory_;
   TH1D* exactMuonMatchedTrackP_;
+  TH1D* exactMuonMatchedTrackPVarBins_;
   TH1D* muonTaggedTrackP_;
+  TH1D* muonTaggedTrackPVarBins_;
   TH1D* nonMuonTrackP_;
+  TH1D* nonMuonTrackPVarBins_;
   TH1D* pfLinkingCutflow_;
   TH1D* pfBlockMatchMultiplicity_;
   TH1D* matchedPFBlockNumberOfElements_;
@@ -141,9 +154,13 @@ private:
   TH1D* trackHCALLinkDistance_;
   TH1D* trackHOLinkDistance_;
   TH1D* noPFBlockMatchTrackP_;
+  TH1D* noPFBlockMatchTrackPVarBins_;
   TH1D* multiplePFBlockMatchesTrackP_;
+  TH1D* multiplePFBlockMatchesTrackPVarBins_;
   TH1D* noLinkedECALTrackP_;
+  TH1D* noLinkedECALTrackPVarBins_;
   TH1D* noLinkedHCALTrackP_;
+  TH1D* noLinkedHCALTrackPVarBins_;
   TH1D* linkedECALEnergy_;
   TH1D* linkedHCALEnergy_;
   TH1D* linkedHOEnergy_;
@@ -153,7 +170,12 @@ private:
   TH1D* linkedECALPlusHCALResponse_;
   TH1D* linkedECALPlusHCALPlusHOResponse_;
   TH1D* linkedECALEnergyFraction_;
-  TH1D* closestTrackECALPlusHCALResponse_;
+  TH1D* prePFHadronCalibrationLinkedECALEnergy_;
+  TH1D* prePFHadronCalibrationLinkedHCALEnergy_;
+  TH1D* prePFHadronCalibrationLinkedECALPlusHCALEnergy_;
+  TH1D* prePFHadronCalibrationLinkedECALResponse_;
+  TH1D* prePFHadronCalibrationLinkedHCALResponse_;
+  TH1D* prePFHadronCalibrationLinkedECALPlusHCALResponse_;
   TH1D* pfHadronCalibratedLinkedECALEnergy_;
   TH1D* pfHadronCalibratedLinkedHCALEnergy_;
   TH1D* pfHadronCalibratedLinkedECALPlusHCALEnergy_;
@@ -166,45 +188,68 @@ private:
   TH1D* nonMuonLinkedECALPlusHCALResponse_;
   TH2D* linkedECALEnergyVsLinkedHCALEnergy_;
   TH2D* linkedECALPlusHCALResponseVsP_;
+  TH2D* linkedECALPlusHCALResponseVsPVarBins_;
   TH2D* linkedECALPlusHCALResponseVsEta_;
   TH2D* linkedECALPlusHCALResponseVsGoodVertices_;
   TH2D* linkedECALPlusHCALResponseVsPFBlockTracks_;
-  TH2D* closestTrackECALPlusHCALResponseVsP_;
+  TH2D* prePFHadronCalibrationLinkedECALPlusHCALResponseVsP_;
+  TH2D* prePFHadronCalibrationLinkedECALPlusHCALResponseVsPVarBins_;
+  TH2D* prePFHadronCalibrationLinkedECALPlusHCALResponseVsEta_;
+  TH2D* prePFHadronCalibrationLinkedECALPlusHCALResponseVsGoodVertices_;
+  TH2D* prePFHadronCalibrationLinkedECALPlusHCALResponseVsPFBlockTracks_;
   TH2D* pfHadronCalibratedLinkedECALPlusHCALResponseVsP_;
+  TH2D* pfHadronCalibratedLinkedECALPlusHCALResponseVsPVarBins_;
   TH2D* pfHadronCalibratedLinkedECALPlusHCALResponseVsEta_;
   TH2D* pfHadronCalibratedLinkedECALPlusHCALResponseVsGoodVertices_;
   TH2D* pfHadronCalibratedLinkedECALPlusHCALResponseVsPFBlockTracks_;
   TH2D* rawVsPFHadronCalibratedLinkedECALPlusHCALResponse_;
   TH2D* muonTaggedLinkedECALPlusHCALResponseVsP_;
+  TH2D* muonTaggedLinkedECALPlusHCALResponseVsPVarBins_;
   TH2D* nonMuonLinkedECALPlusHCALResponseVsP_;
+  TH2D* nonMuonLinkedECALPlusHCALResponseVsPVarBins_;
   TProfile* meanTrackPtVsEta_;
   TProfile* meanSelectedTracksVsGoodVertices_;
   TProfile* exactMuonMatchEfficiencyVsP_;
+  TProfile* exactMuonMatchEfficiencyVsPVarBins_;
   TProfile* exactMuonMatchEfficiencyVsEta_;
   TProfile* muonTagEfficiencyVsP_;
+  TProfile* muonTagEfficiencyVsPVarBins_;
   TProfile* muonTagEfficiencyVsEta_;
   TProfile* pfBlockMatchEfficiencyVsP_;
+  TProfile* pfBlockMatchEfficiencyVsPVarBins_;
   TProfile* pfBlockMatchEfficiencyVsEta_;
   TProfile* pfBlockMatchEfficiencyVsGoodVertices_;
   TProfile* uniquePFBlockMatchEfficiencyVsP_;
+  TProfile* uniquePFBlockMatchEfficiencyVsPVarBins_;
   TProfile* uniquePFBlockMatchEfficiencyVsEta_;
   TProfile* uniquePFBlockMatchEfficiencyVsGoodVertices_;
   TProfile* linkedECALEfficiencyVsP_;
+  TProfile* linkedECALEfficiencyVsPVarBins_;
   TProfile* linkedECALEfficiencyVsEta_;
   TProfile* linkedECALEfficiencyVsGoodVertices_;
   TProfile* linkedHCALEfficiencyVsP_;
+  TProfile* linkedHCALEfficiencyVsPVarBins_;
   TProfile* linkedHCALEfficiencyVsEta_;
   TProfile* linkedHCALEfficiencyVsGoodVertices_;
   TProfile* meanLinkedECALPlusHCALResponseVsP_;
+  TProfile* meanLinkedECALPlusHCALResponseVsPVarBins_;
   TProfile* meanLinkedECALPlusHCALResponseVsEta_;
   TProfile* meanLinkedECALPlusHCALResponseVsGoodVertices_;
   TProfile* meanLinkedECALPlusHCALResponseVsPFBlockTracks_;
+  TProfile* meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsP_;
+  TProfile* meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsPVarBins_;
+  TProfile* meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsEta_;
+  TProfile* meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsGoodVertices_;
+  TProfile* meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsPFBlockTracks_;
   TProfile* meanPFHadronCalibratedLinkedECALPlusHCALResponseVsP_;
+  TProfile* meanPFHadronCalibratedLinkedECALPlusHCALResponseVsPVarBins_;
   TProfile* meanPFHadronCalibratedLinkedECALPlusHCALResponseVsEta_;
   TProfile* meanPFHadronCalibratedLinkedECALPlusHCALResponseVsGoodVertices_;
   TProfile* meanPFHadronCalibratedLinkedECALPlusHCALResponseVsPFBlockTracks_;
   TProfile* meanMuonTaggedLinkedECALPlusHCALResponseVsP_;
+  TProfile* meanMuonTaggedLinkedECALPlusHCALResponseVsPVarBins_;
   TProfile* meanNonMuonLinkedECALPlusHCALResponseVsP_;
+  TProfile* meanNonMuonLinkedECALPlusHCALResponseVsPVarBins_;
 };
 
 SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
@@ -213,6 +258,7 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
       pfBlocksToken_(consumes<reco::PFBlockCollection>(config.getParameter<edm::InputTag>("pfBlocks"))),
       muonsToken_(consumes<reco::MuonCollection>(config.getParameter<edm::InputTag>("muons"))),
       pfCalibrationToken_(esConsumes<edm::Transition::BeginRun>(edm::ESInputTag("", ""))),
+      requirePrimaryVertex_(config.getParameter<bool>("requirePrimaryVertex")),
       minVertexNdof_(config.getParameter<double>("minVertexNdof")),
       maxVertexAbsZ_(config.getParameter<double>("maxVertexAbsZ")),
       maxVertexRho_(config.getParameter<double>("maxVertexRho")),
@@ -236,8 +282,8 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
   eventCount_ = fileService->make<TH1D>("eventCount", ";;events", 1, 0.0, 1.0);
   eventCutflow_ = fileService->make<TH1D>("eventCutflow", ";event selection;events", 4, 0.5, 4.5);
   eventCutflow_->GetXaxis()->SetBinLabel(1, "All events");
-  eventCutflow_->GetXaxis()->SetBinLabel(2, "Has vertex");
-  eventCutflow_->GetXaxis()->SetBinLabel(3, "Good leading vertex");
+  eventCutflow_->GetXaxis()->SetBinLabel(2, requirePrimaryVertex_ ? "Has vertex" : "Vertex check bypassed");
+  eventCutflow_->GetXaxis()->SetBinLabel(3, requirePrimaryVertex_ ? "Good leading vertex" : "PV selection bypassed");
   eventCutflow_->GetXaxis()->SetBinLabel(4, "Has selected track");
 
   trackCutflow_ = fileService->make<TH1D>("trackCutflow", ";track selection;tracks", 13, 0.5, 13.5);
@@ -250,8 +296,8 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
   trackCutflow_->GetXaxis()->SetBinLabel(7, "relative p error");
   trackCutflow_->GetXaxis()->SetBinLabel(8, "tracker layers");
   trackCutflow_->GetXaxis()->SetBinLabel(9, "pixel layers");
-  trackCutflow_->GetXaxis()->SetBinLabel(10, "leading-PV dxy");
-  trackCutflow_->GetXaxis()->SetBinLabel(11, "leading-PV dz");
+  trackCutflow_->GetXaxis()->SetBinLabel(10, requirePrimaryVertex_ ? "leading-PV dxy" : "PV dxy bypassed");
+  trackCutflow_->GetXaxis()->SetBinLabel(11, requirePrimaryVertex_ ? "leading-PV dz" : "PV dz bypassed");
   trackCutflow_->GetXaxis()->SetBinLabel(12, "isolation");
   trackCutflow_->GetXaxis()->SetBinLabel(13, "Selected tracks");
 
@@ -271,7 +317,11 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
       fileService->make<TH1D>("leadingVertexNdof", ";leading primary vertex ndof;events", 100, 0.0, 200.0);
 
   selectedTrackP_ = fileService->make<TH1D>("selectedTrackP", ";selected-track p [GeV];tracks", 100, 0.0, 100.0);
+  selectedTrackPVarBins_ =
+      fileService->make<TH1D>("selectedTrackPVarBins", ";selected-track p [GeV];tracks", nTrkPBins, trkPBins);
   selectedTrackPt_ = fileService->make<TH1D>("selectedTrackPt", ";selected-track p_{T} [GeV];tracks", 100, 0.0, 100.0);
+  selectedTrackPtVarBins_ = fileService->make<TH1D>(
+      "selectedTrackPtVarBins", ";selected-track p_{T} [GeV];tracks", nTrkPBins, trkPBins);
   selectedTrackEta_ = fileService->make<TH1D>("selectedTrackEta", ";selected-track #eta;tracks", 60, -3.0, 3.0);
   selectedTrackPhi_ = fileService->make<TH1D>("selectedTrackPhi", ";selected-track #phi;tracks", 64, -3.2, 3.2);
   selectedTrackNormalizedChi2_ = fileService->make<TH1D>(
@@ -310,9 +360,15 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
   selectedTrackMuonCategory_->GetXaxis()->SetBinLabel(5, "Soft and Loose");
   exactMuonMatchedTrackP_ =
       fileService->make<TH1D>("exactMuonMatchedTrackP", ";selected-track p [GeV];exact muon matches", 100, 0.0, 100.0);
+  exactMuonMatchedTrackPVarBins_ = fileService->make<TH1D>(
+      "exactMuonMatchedTrackPVarBins", ";selected-track p [GeV];exact muon matches", nTrkPBins, trkPBins);
   muonTaggedTrackP_ =
       fileService->make<TH1D>("muonTaggedTrackP", ";selected-track p [GeV];muon-tagged tracks", 100, 0.0, 100.0);
+  muonTaggedTrackPVarBins_ = fileService->make<TH1D>(
+      "muonTaggedTrackPVarBins", ";selected-track p [GeV];muon-tagged tracks", nTrkPBins, trkPBins);
   nonMuonTrackP_ = fileService->make<TH1D>("nonMuonTrackP", ";selected-track p [GeV];non-muon tracks", 100, 0.0, 100.0);
+  nonMuonTrackPVarBins_ = fileService->make<TH1D>(
+      "nonMuonTrackPVarBins", ";selected-track p [GeV];non-muon tracks", nTrkPBins, trkPBins);
 
   pfLinkingCutflow_ = fileService->make<TH1D>("pfLinkingCutflow", ";PF linking;selected tracks", 7, 0.5, 7.5);
   pfLinkingCutflow_->GetXaxis()->SetBinLabel(1, "Selected tracks");
@@ -376,140 +432,186 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
   linkedHOClusterMultiplicity_ = fileService->make<TH1D>(
       "linkedHOClusterMultiplicity", ";directly linked HO PF clusters;uniquely matched selected tracks", 20, -0.5, 19.5);
   trackECALLinkDistance_ =
-      fileService->make<TH1D>("trackECALLinkDistance", ";stored track-ECAL PF link distance;links", 200, 0.0, 2.0);
+      fileService->make<TH1D>("trackECALLinkDistance", ";closest track-ECAL PF link distance;tracks", 200, 0.0, 2.0);
   trackHCALLinkDistance_ =
-      fileService->make<TH1D>("trackHCALLinkDistance", ";stored track-HCAL PF link distance;links", 200, 0.0, 2.0);
+      fileService->make<TH1D>("trackHCALLinkDistance", ";closest track-HCAL PF link distance;tracks", 200, 0.0, 2.0);
   trackHOLinkDistance_ =
-      fileService->make<TH1D>("trackHOLinkDistance", ";stored track-HO PF link distance;links", 200, 0.0, 2.0);
+      fileService->make<TH1D>("trackHOLinkDistance", ";closest track-HO PF link distance;tracks", 200, 0.0, 2.0);
   noPFBlockMatchTrackP_ = fileService->make<TH1D>(
       "noPFBlockMatchTrackP", ";p [GeV];selected tracks without a PF-block match", 100, 0.0, 100.0);
+  noPFBlockMatchTrackPVarBins_ = fileService->make<TH1D>(
+      "noPFBlockMatchTrackPVarBins", ";p [GeV];selected tracks without a PF-block match", nTrkPBins, trkPBins);
   multiplePFBlockMatchesTrackP_ = fileService->make<TH1D>(
       "multiplePFBlockMatchesTrackP", ";p [GeV];selected tracks with multiple PF-block matches", 100, 0.0, 100.0);
+  multiplePFBlockMatchesTrackPVarBins_ = fileService->make<TH1D>("multiplePFBlockMatchesTrackPVarBins",
+                                                                 ";p [GeV];selected tracks with multiple PF-block matches",
+                                                                 nTrkPBins,
+                                                                 trkPBins);
   noLinkedECALTrackP_ = fileService->make<TH1D>(
       "noLinkedECALTrackP", ";p [GeV];uniquely matched selected tracks without a linked ECAL cluster", 100, 0.0, 100.0);
+  noLinkedECALTrackPVarBins_ = fileService->make<TH1D>(
+      "noLinkedECALTrackPVarBins",
+      ";p [GeV];uniquely matched selected tracks without a linked ECAL cluster",
+      nTrkPBins,
+      trkPBins);
   noLinkedHCALTrackP_ = fileService->make<TH1D>(
       "noLinkedHCALTrackP", ";p [GeV];uniquely matched selected tracks without a linked HCAL cluster", 100, 0.0, 100.0);
+  noLinkedHCALTrackPVarBins_ = fileService->make<TH1D>(
+      "noLinkedHCALTrackPVarBins",
+      ";p [GeV];uniquely matched selected tracks without a linked HCAL cluster",
+      nTrkPBins,
+      trkPBins);
 
   linkedECALEnergy_ =
       fileService->make<TH1D>("linkedECALEnergy",
-                              ";directly linked ECAL PF-cluster energy [GeV];uniquely matched selected tracks",
+                              ";closest linked ECAL PF-cluster energy [GeV];uniquely matched selected tracks",
                               200,
                               0.0,
                               200.0);
   linkedHCALEnergy_ =
       fileService->make<TH1D>("linkedHCALEnergy",
-                              ";directly linked HCAL PF-cluster energy [GeV];uniquely matched selected tracks",
+                              ";closest linked HCAL PF-cluster energy [GeV];uniquely matched selected tracks",
                               200,
                               0.0,
                               200.0);
   linkedHOEnergy_ = fileService->make<TH1D>(
-      "linkedHOEnergy", ";directly linked HO PF-cluster energy [GeV];uniquely matched selected tracks", 100, 0.0, 50.0);
+      "linkedHOEnergy", ";closest linked HO PF-cluster energy [GeV];uniquely matched selected tracks", 100, 0.0, 50.0);
   linkedECALPlusHCALEnergy_ =
       fileService->make<TH1D>("linkedECALPlusHCALEnergy",
-                              ";directly linked ECAL+HCAL PF-cluster energy [GeV];uniquely matched selected tracks",
+                              ";closest linked ECAL+HCAL PF-cluster energy [GeV];uniquely matched selected tracks",
                               200,
                               0.0,
                               200.0);
   linkedECALResponse_ =
       fileService->make<TH1D>("linkedECALResponse",
-                              ";directly linked ECAL PF-cluster energy / p;uniquely matched selected tracks",
+                              ";closest linked ECAL PF-cluster energy / p;uniquely matched selected tracks",
                               200,
                               0.0,
                               5.0);
   linkedHCALResponse_ =
       fileService->make<TH1D>("linkedHCALResponse",
-                              ";directly linked HCAL PF-cluster energy / p;uniquely matched selected tracks",
+                              ";closest linked HCAL PF-cluster energy / p;uniquely matched selected tracks",
                               200,
                               0.0,
                               5.0);
   linkedECALPlusHCALResponse_ =
       fileService->make<TH1D>("linkedECALPlusHCALResponse",
-                              ";directly linked ECAL+HCAL PF-cluster energy / p;uniquely matched selected tracks",
+                              ";closest linked ECAL+HCAL PF-cluster energy / p;uniquely matched selected tracks",
                               200,
                               0.0,
                               5.0);
   linkedECALPlusHCALPlusHOResponse_ =
       fileService->make<TH1D>("linkedECALPlusHCALPlusHOResponse",
-                              ";directly linked ECAL+HCAL+HO PF-cluster energy / p;uniquely matched selected tracks",
+                              ";closest linked ECAL+HCAL+HO PF-cluster energy / p;uniquely matched selected tracks",
                               200,
                               0.0,
                               5.0);
   linkedECALEnergyFraction_ =
       fileService->make<TH1D>("linkedECALEnergyFraction",
-                              ";ECAL / (ECAL+HCAL) directly linked PF-cluster energy;tracks with ECAL+HCAL energy > 0",
+                              ";closest linked ECAL / (ECAL+HCAL) energy;tracks with ECAL+HCAL energy > 0",
                               100,
                               0.0,
                               1.0);
-  closestTrackECALPlusHCALResponse_ =
-      fileService->make<TH1D>("closestTrackECALPlusHCALResponse",
-                              ";closest-track ECAL+HCAL PF-cluster energy / p;uniquely matched selected tracks",
-                              200,
-                              0.0,
-                              5.0);
+  prePFHadronCalibrationLinkedECALEnergy_ = fileService->make<TH1D>(
+      "prePFHadronCalibrationLinkedECALEnergy",
+      ";pre-PF-hadron-calibration closest linked ECAL energy [GeV];tracks with closest linked HCAL",
+      200,
+      0.0,
+      200.0);
+  prePFHadronCalibrationLinkedHCALEnergy_ = fileService->make<TH1D>(
+      "prePFHadronCalibrationLinkedHCALEnergy",
+      ";pre-PF-hadron-calibration closest linked HCAL energy [GeV];tracks with closest linked HCAL",
+      200,
+      0.0,
+      200.0);
+  prePFHadronCalibrationLinkedECALPlusHCALEnergy_ = fileService->make<TH1D>(
+      "prePFHadronCalibrationLinkedECALPlusHCALEnergy",
+      ";pre-PF-hadron-calibration closest linked ECAL+HCAL energy [GeV];tracks with closest linked HCAL",
+      200,
+      0.0,
+      200.0);
+  prePFHadronCalibrationLinkedECALResponse_ = fileService->make<TH1D>(
+      "prePFHadronCalibrationLinkedECALResponse",
+      ";pre-PF-hadron-calibration closest linked ECAL energy / p;tracks with closest linked HCAL",
+      200,
+      0.0,
+      5.0);
+  prePFHadronCalibrationLinkedHCALResponse_ = fileService->make<TH1D>(
+      "prePFHadronCalibrationLinkedHCALResponse",
+      ";pre-PF-hadron-calibration closest linked HCAL energy / p;tracks with closest linked HCAL",
+      200,
+      0.0,
+      5.0);
+  prePFHadronCalibrationLinkedECALPlusHCALResponse_ = fileService->make<TH1D>(
+      "prePFHadronCalibrationLinkedECALPlusHCALResponse",
+      ";pre-PF-hadron-calibration closest linked ECAL+HCAL energy / p;tracks with closest linked HCAL",
+      200,
+      0.0,
+      5.0);
   pfHadronCalibratedLinkedECALEnergy_ =
       fileService->make<TH1D>("pfHadronCalibratedLinkedECALEnergy",
-                              ";PF hadron-calibrated linked ECAL energy [GeV];uniquely matched selected tracks",
+                              ";PF hadron-calibrated closest linked ECAL energy [GeV];tracks with closest linked HCAL",
                               200,
                               0.0,
                               200.0);
   pfHadronCalibratedLinkedHCALEnergy_ =
       fileService->make<TH1D>("pfHadronCalibratedLinkedHCALEnergy",
-                              ";PF hadron-calibrated linked HCAL energy [GeV];uniquely matched selected tracks",
+                              ";PF hadron-calibrated closest linked HCAL energy [GeV];tracks with closest linked HCAL",
                               200,
                               0.0,
                               200.0);
   pfHadronCalibratedLinkedECALPlusHCALEnergy_ =
       fileService->make<TH1D>("pfHadronCalibratedLinkedECALPlusHCALEnergy",
-                              ";PF hadron-calibrated linked ECAL+HCAL energy [GeV];uniquely matched selected tracks",
+                              ";PF hadron-calibrated closest linked ECAL+HCAL energy [GeV];tracks with closest linked HCAL",
                               200,
                               0.0,
                               200.0);
   pfHadronCalibratedLinkedECALResponse_ =
       fileService->make<TH1D>("pfHadronCalibratedLinkedECALResponse",
-                              ";PF hadron-calibrated linked ECAL energy / p;uniquely matched selected tracks",
+                              ";PF hadron-calibrated closest linked ECAL energy / p;tracks with closest linked HCAL",
                               200,
                               0.0,
                               5.0);
   pfHadronCalibratedLinkedHCALResponse_ =
       fileService->make<TH1D>("pfHadronCalibratedLinkedHCALResponse",
-                              ";PF hadron-calibrated linked HCAL energy / p;uniquely matched selected tracks",
+                              ";PF hadron-calibrated closest linked HCAL energy / p;tracks with closest linked HCAL",
                               200,
                               0.0,
                               5.0);
   pfHadronCalibratedLinkedECALPlusHCALResponse_ =
       fileService->make<TH1D>("pfHadronCalibratedLinkedECALPlusHCALResponse",
-                              ";PF hadron-calibrated linked ECAL+HCAL energy / p;uniquely matched selected tracks",
+                              ";PF hadron-calibrated closest linked ECAL+HCAL energy / p;tracks with closest linked HCAL",
                               200,
                               0.0,
                               5.0);
   pfHadronCalibrationFactor_ =
       fileService->make<TH1D>("pfHadronCalibrationFactor",
-                              ";PF hadron-calibrated energy / raw energy;tracks with raw energy > 0",
+                              ";PF hadron-calibrated energy / raw energy;tracks with closest linked HCAL and raw energy > 0",
                               1000,
                               0.0,
                               50.0);
   pfHadronCalibrationResponseChange_ =
       fileService->make<TH1D>("pfHadronCalibrationResponseChange",
-                              ";PF hadron-calibrated response - raw response;uniquely matched selected tracks",
+                              ";PF hadron-calibrated response - raw response;tracks with closest linked HCAL",
                               400,
                               -5.0,
                               5.0);
   muonTaggedLinkedECALPlusHCALResponse_ =
       fileService->make<TH1D>("muonTaggedLinkedECALPlusHCALResponse",
-                              ";directly linked ECAL+HCAL PF-cluster energy / p;muon-tagged tracks",
+                              ";closest linked ECAL+HCAL PF-cluster energy / p;muon-tagged tracks",
                               200,
                               0.0,
                               5.0);
   nonMuonLinkedECALPlusHCALResponse_ =
       fileService->make<TH1D>("nonMuonLinkedECALPlusHCALResponse",
-                              ";directly linked ECAL+HCAL PF-cluster energy / p;non-muon tracks",
+                              ";closest linked ECAL+HCAL PF-cluster energy / p;non-muon tracks",
                               200,
                               0.0,
                               5.0);
 
   linkedECALEnergyVsLinkedHCALEnergy_ = fileService->make<TH2D>(
       "linkedECALEnergyVsLinkedHCALEnergy",
-      ";directly linked ECAL PF-cluster energy [GeV];directly linked HCAL PF-cluster energy [GeV]",
+      ";closest linked ECAL PF-cluster energy [GeV];closest linked HCAL PF-cluster energy [GeV]",
       200,
       0.0,
       200.0,
@@ -518,16 +620,24 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
       200.0);
   linkedECALPlusHCALResponseVsP_ =
       fileService->make<TH2D>("linkedECALPlusHCALResponseVsP",
-                              ";selected-track p [GeV];directly linked ECAL+HCAL PF-cluster energy / p",
+                              ";selected-track p [GeV];closest linked ECAL+HCAL PF-cluster energy / p",
                               100,
                               0.0,
                               100.0,
                               200,
                               0.0,
                               5.0);
+  linkedECALPlusHCALResponseVsPVarBins_ =
+      fileService->make<TH2D>("linkedECALPlusHCALResponseVsPVarBins",
+                              ";selected-track p [GeV];closest linked ECAL+HCAL PF-cluster energy / p",
+                              nTrkPBins,
+                              trkPBins,
+                              200,
+                              0.0,
+                              5.0);
   linkedECALPlusHCALResponseVsEta_ =
       fileService->make<TH2D>("linkedECALPlusHCALResponseVsEta",
-                              ";selected-track #eta;directly linked ECAL+HCAL PF-cluster energy / p",
+                              ";selected-track #eta;closest linked ECAL+HCAL PF-cluster energy / p",
                               40,
                               -maxTrackAbsEta_,
                               maxTrackAbsEta_,
@@ -536,7 +646,7 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
                               5.0);
   linkedECALPlusHCALResponseVsGoodVertices_ =
       fileService->make<TH2D>("linkedECALPlusHCALResponseVsGoodVertices",
-                              ";number of good primary vertices;directly linked ECAL+HCAL PF-cluster energy / p",
+                              ";number of good primary vertices;closest linked ECAL+HCAL PF-cluster energy / p",
                               20,
                               -0.5,
                               19.5,
@@ -545,34 +655,77 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
                               5.0);
   linkedECALPlusHCALResponseVsPFBlockTracks_ =
       fileService->make<TH2D>("linkedECALPlusHCALResponseVsPFBlockTracks",
-                              ";TRACK elements in matched PF block;directly linked ECAL+HCAL PF-cluster energy / p",
+                              ";TRACK elements in matched PF block;closest linked ECAL+HCAL PF-cluster energy / p",
                               20,
                               -0.5,
                               19.5,
                               200,
                               0.0,
                               5.0);
-  closestTrackECALPlusHCALResponseVsP_ =
-      fileService->make<TH2D>("closestTrackECALPlusHCALResponseVsP",
-                              ";selected-track p [GeV];closest-track ECAL+HCAL PF-cluster energy / p",
+  prePFHadronCalibrationLinkedECALPlusHCALResponseVsP_ = fileService->make<TH2D>(
+      "prePFHadronCalibrationLinkedECALPlusHCALResponseVsP",
+      ";selected-track p [GeV];pre-PF-hadron-calibration closest linked ECAL+HCAL energy / p;tracks with closest linked HCAL",
+      100,
+      0.0,
+      100.0,
+      200,
+      0.0,
+      5.0);
+  prePFHadronCalibrationLinkedECALPlusHCALResponseVsPVarBins_ = fileService->make<TH2D>(
+      "prePFHadronCalibrationLinkedECALPlusHCALResponseVsPVarBins",
+      ";selected-track p [GeV];pre-PF-hadron-calibration closest linked ECAL+HCAL energy / p;tracks with closest linked HCAL",
+      nTrkPBins,
+      trkPBins,
+      200,
+      0.0,
+      5.0);
+  prePFHadronCalibrationLinkedECALPlusHCALResponseVsEta_ = fileService->make<TH2D>(
+      "prePFHadronCalibrationLinkedECALPlusHCALResponseVsEta",
+      ";selected-track #eta;pre-PF-hadron-calibration closest linked ECAL+HCAL energy / p;tracks with closest linked HCAL",
+      40,
+      -maxTrackAbsEta_,
+      maxTrackAbsEta_,
+      200,
+      0.0,
+      5.0);
+  prePFHadronCalibrationLinkedECALPlusHCALResponseVsGoodVertices_ = fileService->make<TH2D>(
+      "prePFHadronCalibrationLinkedECALPlusHCALResponseVsGoodVertices",
+      ";number of good primary vertices;pre-PF-hadron-calibration closest linked ECAL+HCAL energy / p;tracks with closest linked HCAL",
+      20,
+      -0.5,
+      19.5,
+      200,
+      0.0,
+      5.0);
+  prePFHadronCalibrationLinkedECALPlusHCALResponseVsPFBlockTracks_ = fileService->make<TH2D>(
+      "prePFHadronCalibrationLinkedECALPlusHCALResponseVsPFBlockTracks",
+      ";TRACK elements in matched PF block;pre-PF-hadron-calibration closest linked ECAL+HCAL energy / p;tracks with closest linked HCAL",
+      20,
+      -0.5,
+      19.5,
+      200,
+      0.0,
+      5.0);
+  pfHadronCalibratedLinkedECALPlusHCALResponseVsP_ =
+      fileService->make<TH2D>("pfHadronCalibratedLinkedECALPlusHCALResponseVsP",
+                              ";selected-track p [GeV];PF hadron-calibrated closest linked ECAL+HCAL energy / p;tracks with closest linked HCAL",
                               100,
                               0.0,
                               100.0,
                               200,
                               0.0,
                               5.0);
-  pfHadronCalibratedLinkedECALPlusHCALResponseVsP_ =
-      fileService->make<TH2D>("pfHadronCalibratedLinkedECALPlusHCALResponseVsP",
-                              ";selected-track p [GeV];PF hadron-calibrated linked ECAL+HCAL energy / p",
-                              100,
-                              0.0,
-                              100.0,
+  pfHadronCalibratedLinkedECALPlusHCALResponseVsPVarBins_ =
+      fileService->make<TH2D>("pfHadronCalibratedLinkedECALPlusHCALResponseVsPVarBins",
+                              ";selected-track p [GeV];PF hadron-calibrated closest linked ECAL+HCAL energy / p;tracks with closest linked HCAL",
+                              nTrkPBins,
+                              trkPBins,
                               200,
                               0.0,
                               5.0);
   pfHadronCalibratedLinkedECALPlusHCALResponseVsEta_ =
       fileService->make<TH2D>("pfHadronCalibratedLinkedECALPlusHCALResponseVsEta",
-                              ";selected-track #eta;PF hadron-calibrated linked ECAL+HCAL energy / p",
+                              ";selected-track #eta;PF hadron-calibrated closest linked ECAL+HCAL energy / p;tracks with closest linked HCAL",
                               40,
                               -maxTrackAbsEta_,
                               maxTrackAbsEta_,
@@ -581,7 +734,7 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
                               5.0);
   pfHadronCalibratedLinkedECALPlusHCALResponseVsGoodVertices_ =
       fileService->make<TH2D>("pfHadronCalibratedLinkedECALPlusHCALResponseVsGoodVertices",
-                              ";number of good primary vertices;PF hadron-calibrated linked ECAL+HCAL energy / p",
+                              ";number of good primary vertices;PF hadron-calibrated closest linked ECAL+HCAL energy / p;tracks with closest linked HCAL",
                               20,
                               -0.5,
                               19.5,
@@ -590,7 +743,7 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
                               5.0);
   pfHadronCalibratedLinkedECALPlusHCALResponseVsPFBlockTracks_ =
       fileService->make<TH2D>("pfHadronCalibratedLinkedECALPlusHCALResponseVsPFBlockTracks",
-                              ";TRACK elements in matched PF block;PF hadron-calibrated linked ECAL+HCAL energy / p",
+                              ";TRACK elements in matched PF block;PF hadron-calibrated closest linked ECAL+HCAL energy / p;tracks with closest linked HCAL",
                               20,
                               -0.5,
                               19.5,
@@ -599,7 +752,7 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
                               5.0);
   rawVsPFHadronCalibratedLinkedECALPlusHCALResponse_ =
       fileService->make<TH2D>("rawVsPFHadronCalibratedLinkedECALPlusHCALResponse",
-                              ";raw linked ECAL+HCAL energy / p;PF hadron-calibrated linked ECAL+HCAL energy / p",
+                              ";raw closest linked ECAL+HCAL energy / p;PF hadron-calibrated closest linked ECAL+HCAL energy / p;tracks with closest linked HCAL",
                               200,
                               0.0,
                               5.0,
@@ -608,19 +761,35 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
                               5.0);
   muonTaggedLinkedECALPlusHCALResponseVsP_ =
       fileService->make<TH2D>("muonTaggedLinkedECALPlusHCALResponseVsP",
-                              ";selected-track p [GeV];directly linked ECAL+HCAL PF-cluster energy / p",
+                              ";selected-track p [GeV];closest linked ECAL+HCAL PF-cluster energy / p",
                               100,
                               0.0,
                               100.0,
                               200,
                               0.0,
                               5.0);
+  muonTaggedLinkedECALPlusHCALResponseVsPVarBins_ =
+      fileService->make<TH2D>("muonTaggedLinkedECALPlusHCALResponseVsPVarBins",
+                              ";selected-track p [GeV];closest linked ECAL+HCAL PF-cluster energy / p",
+                              nTrkPBins,
+                              trkPBins,
+                              200,
+                              0.0,
+                              5.0);
   nonMuonLinkedECALPlusHCALResponseVsP_ =
       fileService->make<TH2D>("nonMuonLinkedECALPlusHCALResponseVsP",
-                              ";selected-track p [GeV];directly linked ECAL+HCAL PF-cluster energy / p",
+                              ";selected-track p [GeV];closest linked ECAL+HCAL PF-cluster energy / p",
                               100,
                               0.0,
                               100.0,
+                              200,
+                              0.0,
+                              5.0);
+  nonMuonLinkedECALPlusHCALResponseVsPVarBins_ =
+      fileService->make<TH2D>("nonMuonLinkedECALPlusHCALResponseVsPVarBins",
+                              ";selected-track p [GeV];closest linked ECAL+HCAL PF-cluster energy / p",
+                              nTrkPBins,
+                              trkPBins,
                               200,
                               0.0,
                               5.0);
@@ -634,6 +803,11 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
 
   exactMuonMatchEfficiencyVsP_ = fileService->make<TProfile>(
       "exactMuonMatchEfficiencyVsP", ";selected-track p [GeV];fraction with an exact muon match", 100, 0.0, 100.0);
+  exactMuonMatchEfficiencyVsPVarBins_ = fileService->make<TProfile>(
+      "exactMuonMatchEfficiencyVsPVarBins",
+      ";selected-track p [GeV];fraction with an exact muon match",
+      nTrkPBins,
+      trkPBins);
   exactMuonMatchEfficiencyVsEta_ = fileService->make<TProfile>("exactMuonMatchEfficiencyVsEta",
                                                                ";selected-track #eta;fraction with an exact muon match",
                                                                40,
@@ -641,6 +815,11 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
                                                                maxTrackAbsEta_);
   muonTagEfficiencyVsP_ = fileService->make<TProfile>(
       "muonTagEfficiencyVsP", ";selected-track p [GeV];fraction tagged as Soft or Loose muon", 100, 0.0, 100.0);
+  muonTagEfficiencyVsPVarBins_ = fileService->make<TProfile>(
+      "muonTagEfficiencyVsPVarBins",
+      ";selected-track p [GeV];fraction tagged as Soft or Loose muon",
+      nTrkPBins,
+      trkPBins);
   muonTagEfficiencyVsEta_ = fileService->make<TProfile>("muonTagEfficiencyVsEta",
                                                         ";selected-track #eta;fraction tagged as Soft or Loose muon",
                                                         40,
@@ -649,6 +828,11 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
 
   pfBlockMatchEfficiencyVsP_ = fileService->make<TProfile>(
       "pfBlockMatchEfficiencyVsP", ";selected-track p [GeV];fraction with a PF-block match", 100, 0.0, 100.0);
+  pfBlockMatchEfficiencyVsPVarBins_ = fileService->make<TProfile>(
+      "pfBlockMatchEfficiencyVsPVarBins",
+      ";selected-track p [GeV];fraction with a PF-block match",
+      nTrkPBins,
+      trkPBins);
   pfBlockMatchEfficiencyVsEta_ = fileService->make<TProfile>("pfBlockMatchEfficiencyVsEta",
                                                              ";selected-track #eta;fraction with a PF-block match",
                                                              40,
@@ -666,6 +850,11 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
                                   100,
                                   0.0,
                                   100.0);
+  uniquePFBlockMatchEfficiencyVsPVarBins_ = fileService->make<TProfile>(
+      "uniquePFBlockMatchEfficiencyVsPVarBins",
+      ";selected-track p [GeV];fraction with exactly one PF-block match",
+      nTrkPBins,
+      trkPBins);
   uniquePFBlockMatchEfficiencyVsEta_ =
       fileService->make<TProfile>("uniquePFBlockMatchEfficiencyVsEta",
                                   ";selected-track #eta;fraction with exactly one PF-block match",
@@ -680,6 +869,11 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
                                   19.5);
   linkedECALEfficiencyVsP_ = fileService->make<TProfile>(
       "linkedECALEfficiencyVsP", ";selected-track p [GeV];fraction with a direct ECAL PF link", 100, 0.0, 100.0);
+  linkedECALEfficiencyVsPVarBins_ = fileService->make<TProfile>(
+      "linkedECALEfficiencyVsPVarBins",
+      ";selected-track p [GeV];fraction with a direct ECAL PF link",
+      nTrkPBins,
+      trkPBins);
   linkedECALEfficiencyVsEta_ = fileService->make<TProfile>("linkedECALEfficiencyVsEta",
                                                            ";selected-track #eta;fraction with a direct ECAL PF link",
                                                            40,
@@ -693,6 +887,11 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
                                   19.5);
   linkedHCALEfficiencyVsP_ = fileService->make<TProfile>(
       "linkedHCALEfficiencyVsP", ";selected-track p [GeV];fraction with a direct HCAL PF link", 100, 0.0, 100.0);
+  linkedHCALEfficiencyVsPVarBins_ = fileService->make<TProfile>(
+      "linkedHCALEfficiencyVsPVarBins",
+      ";selected-track p [GeV];fraction with a direct HCAL PF link",
+      nTrkPBins,
+      trkPBins);
   linkedHCALEfficiencyVsEta_ = fileService->make<TProfile>("linkedHCALEfficiencyVsEta",
                                                            ";selected-track #eta;fraction with a direct HCAL PF link",
                                                            40,
@@ -706,64 +905,113 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
                                   19.5);
   meanLinkedECALPlusHCALResponseVsP_ =
       fileService->make<TProfile>("meanLinkedECALPlusHCALResponseVsP",
-                                  ";selected-track p [GeV];mean directly linked ECAL+HCAL PF-cluster energy / p",
+                                  ";selected-track p [GeV];mean closest linked ECAL+HCAL PF-cluster energy / p",
                                   100,
                                   0.0,
                                   100.0);
+  meanLinkedECALPlusHCALResponseVsPVarBins_ = fileService->make<TProfile>(
+      "meanLinkedECALPlusHCALResponseVsPVarBins",
+      ";selected-track p [GeV];mean closest linked ECAL+HCAL PF-cluster energy / p",
+      nTrkPBins,
+      trkPBins);
   meanLinkedECALPlusHCALResponseVsEta_ =
       fileService->make<TProfile>("meanLinkedECALPlusHCALResponseVsEta",
-                                  ";selected-track #eta;mean directly linked ECAL+HCAL PF-cluster energy / p",
+                                  ";selected-track #eta;mean closest linked ECAL+HCAL PF-cluster energy / p",
                                   40,
                                   -maxTrackAbsEta_,
                                   maxTrackAbsEta_);
   meanLinkedECALPlusHCALResponseVsGoodVertices_ = fileService->make<TProfile>(
       "meanLinkedECALPlusHCALResponseVsGoodVertices",
-      ";number of good primary vertices;mean directly linked ECAL+HCAL PF-cluster energy / p",
+      ";number of good primary vertices;mean closest linked ECAL+HCAL PF-cluster energy / p",
       20,
       -0.5,
       19.5);
   meanLinkedECALPlusHCALResponseVsPFBlockTracks_ = fileService->make<TProfile>(
       "meanLinkedECALPlusHCALResponseVsPFBlockTracks",
-      ";TRACK elements in matched PF block;mean directly linked ECAL+HCAL PF-cluster energy / p",
+      ";TRACK elements in matched PF block;mean closest linked ECAL+HCAL PF-cluster energy / p",
+      20,
+      -0.5,
+      19.5);
+  meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsP_ = fileService->make<TProfile>(
+      "meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsP",
+      ";selected-track p [GeV];mean pre-PF-hadron-calibration closest linked ECAL+HCAL energy / p for tracks with closest linked HCAL",
+      100,
+      0.0,
+      100.0);
+  meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsPVarBins_ = fileService->make<TProfile>(
+      "meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsPVarBins",
+      ";selected-track p [GeV];mean pre-PF-hadron-calibration closest linked ECAL+HCAL energy / p for tracks with closest linked HCAL",
+      nTrkPBins,
+      trkPBins);
+  meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsEta_ = fileService->make<TProfile>(
+      "meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsEta",
+      ";selected-track #eta;mean pre-PF-hadron-calibration closest linked ECAL+HCAL energy / p for tracks with closest linked HCAL",
+      40,
+      -maxTrackAbsEta_,
+      maxTrackAbsEta_);
+  meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsGoodVertices_ = fileService->make<TProfile>(
+      "meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsGoodVertices",
+      ";number of good primary vertices;mean pre-PF-hadron-calibration closest linked ECAL+HCAL energy / p for tracks with closest linked HCAL",
+      20,
+      -0.5,
+      19.5);
+  meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsPFBlockTracks_ = fileService->make<TProfile>(
+      "meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsPFBlockTracks",
+      ";TRACK elements in matched PF block;mean pre-PF-hadron-calibration closest linked ECAL+HCAL energy / p for tracks with closest linked HCAL",
       20,
       -0.5,
       19.5);
   meanPFHadronCalibratedLinkedECALPlusHCALResponseVsP_ =
       fileService->make<TProfile>("meanPFHadronCalibratedLinkedECALPlusHCALResponseVsP",
-                                  ";selected-track p [GeV];mean PF hadron-calibrated linked ECAL+HCAL energy / p",
+                                  ";selected-track p [GeV];mean PF hadron-calibrated closest linked ECAL+HCAL energy / p for tracks with closest linked HCAL",
                                   100,
                                   0.0,
                                   100.0);
+  meanPFHadronCalibratedLinkedECALPlusHCALResponseVsPVarBins_ = fileService->make<TProfile>(
+      "meanPFHadronCalibratedLinkedECALPlusHCALResponseVsPVarBins",
+      ";selected-track p [GeV];mean PF hadron-calibrated closest linked ECAL+HCAL energy / p for tracks with closest linked HCAL",
+      nTrkPBins,
+      trkPBins);
   meanPFHadronCalibratedLinkedECALPlusHCALResponseVsEta_ =
       fileService->make<TProfile>("meanPFHadronCalibratedLinkedECALPlusHCALResponseVsEta",
-                                  ";selected-track #eta;mean PF hadron-calibrated linked ECAL+HCAL energy / p",
+                                  ";selected-track #eta;mean PF hadron-calibrated closest linked ECAL+HCAL energy / p for tracks with closest linked HCAL",
                                   40,
                                   -maxTrackAbsEta_,
                                   maxTrackAbsEta_);
   meanPFHadronCalibratedLinkedECALPlusHCALResponseVsGoodVertices_ = fileService->make<TProfile>(
       "meanPFHadronCalibratedLinkedECALPlusHCALResponseVsGoodVertices",
-      ";number of good primary vertices;mean PF hadron-calibrated linked ECAL+HCAL energy / p",
+      ";number of good primary vertices;mean PF hadron-calibrated closest linked ECAL+HCAL energy / p for tracks with closest linked HCAL",
       20,
       -0.5,
       19.5);
   meanPFHadronCalibratedLinkedECALPlusHCALResponseVsPFBlockTracks_ = fileService->make<TProfile>(
       "meanPFHadronCalibratedLinkedECALPlusHCALResponseVsPFBlockTracks",
-      ";TRACK elements in matched PF block;mean PF hadron-calibrated linked ECAL+HCAL energy / p",
+      ";TRACK elements in matched PF block;mean PF hadron-calibrated closest linked ECAL+HCAL energy / p for tracks with closest linked HCAL",
       20,
       -0.5,
       19.5);
   meanMuonTaggedLinkedECALPlusHCALResponseVsP_ = fileService->make<TProfile>(
       "meanMuonTaggedLinkedECALPlusHCALResponseVsP",
-      ";selected-track p [GeV];mean directly linked ECAL+HCAL PF-cluster energy / p for muon-tagged tracks",
+      ";selected-track p [GeV];mean closest linked ECAL+HCAL PF-cluster energy / p for muon-tagged tracks",
       100,
       0.0,
       100.0);
+  meanMuonTaggedLinkedECALPlusHCALResponseVsPVarBins_ = fileService->make<TProfile>(
+      "meanMuonTaggedLinkedECALPlusHCALResponseVsPVarBins",
+      ";selected-track p [GeV];mean closest linked ECAL+HCAL PF-cluster energy / p for muon-tagged tracks",
+      nTrkPBins,
+      trkPBins);
   meanNonMuonLinkedECALPlusHCALResponseVsP_ = fileService->make<TProfile>(
       "meanNonMuonLinkedECALPlusHCALResponseVsP",
-      ";selected-track p [GeV];mean directly linked ECAL+HCAL PF-cluster energy / p for non-muon tracks",
+      ";selected-track p [GeV];mean closest linked ECAL+HCAL PF-cluster energy / p for non-muon tracks",
       100,
       0.0,
       100.0);
+  meanNonMuonLinkedECALPlusHCALResponseVsPVarBins_ = fileService->make<TProfile>(
+      "meanNonMuonLinkedECALPlusHCALResponseVsPVarBins",
+      ";selected-track p [GeV];mean closest linked ECAL+HCAL PF-cluster energy / p for non-muon tracks",
+      nTrkPBins,
+      trkPBins);
 }
 
 void SPRLowPUDataAnalyzer::beginRun(edm::Run const&, edm::EventSetup const& setup) {
@@ -775,12 +1023,10 @@ void SPRLowPUDataAnalyzer::beginRun(edm::Run const&, edm::EventSetup const& setu
 void SPRLowPUDataAnalyzer::analyze(edm::Event const& event, edm::EventSetup const&) {
   auto const tracksHandle = event.getHandle(tracksToken_);
   auto const& tracks = *tracksHandle;
-  auto const& vertices = event.get(verticesToken_);
   auto const& pfBlocks = event.get(pfBlocksToken_);
   auto const& muons = event.get(muonsToken_);
 
   eventCount_->Fill(0.5);
-  numberOfVertices_->Fill(vertices.size());
   numberOfTracks_->Fill(tracks.size());
   numberOfPFBlocks_->Fill(pfBlocks.size());
 
@@ -791,27 +1037,36 @@ void SPRLowPUDataAnalyzer::analyze(edm::Event const& event, edm::EventSetup cons
   eventCutflow_->Fill(1.0);
 
   unsigned int numberOfGoodVertices = 0;
-  for (auto const& vertex : vertices) {
-    if (isGoodVertex(vertex)) {
-      ++numberOfGoodVertices;
+  reco::Vertex const* leadingVertex = nullptr;
+  if (requirePrimaryVertex_) {
+    auto const& vertices = event.get(verticesToken_);
+    numberOfVertices_->Fill(vertices.size());
+
+    for (auto const& vertex : vertices) {
+      if (isGoodVertex(vertex)) {
+        ++numberOfGoodVertices;
+      }
     }
-  }
-  numberOfGoodVertices_->Fill(numberOfGoodVertices);
+    numberOfGoodVertices_->Fill(numberOfGoodVertices);
 
-  if (vertices.empty()) {
-    return;
-  }
-  eventCutflow_->Fill(2.0);
+    if (vertices.empty()) {
+      return;
+    }
+    eventCutflow_->Fill(2.0);
 
-  reco::Vertex const& leadingVertex = vertices.front();
-  leadingVertexZ_->Fill(leadingVertex.z());
-  leadingVertexRho_->Fill(leadingVertex.position().Rho());
-  leadingVertexNdof_->Fill(leadingVertex.ndof());
+    leadingVertex = &vertices.front();
+    leadingVertexZ_->Fill(leadingVertex->z());
+    leadingVertexRho_->Fill(leadingVertex->position().Rho());
+    leadingVertexNdof_->Fill(leadingVertex->ndof());
 
-  if (!isGoodVertex(leadingVertex)) {
-    return;
+    if (!isGoodVertex(*leadingVertex)) {
+      return;
+    }
+    eventCutflow_->Fill(3.0);
+  } else {
+    eventCutflow_->Fill(2.0);
+    eventCutflow_->Fill(3.0);
   }
-  eventCutflow_->Fill(3.0);
 
   unsigned int numberOfSelectedTracks = 0;
   for (std::size_t trackIndex = 0; trackIndex < tracks.size(); ++trackIndex) {
@@ -861,15 +1116,21 @@ void SPRLowPUDataAnalyzer::analyze(edm::Event const& event, edm::EventSetup cons
     }
     trackCutflow_->Fill(9.0);
 
-    double const dxy = track.dxy(leadingVertex.position());
-    if (std::abs(dxy) > maxTrackAbsDxy_) {
-      continue;
+    double dxy = 0.0;
+    if (leadingVertex != nullptr) {
+      dxy = track.dxy(leadingVertex->position());
+      if (std::abs(dxy) > maxTrackAbsDxy_) {
+        continue;
+      }
     }
     trackCutflow_->Fill(10.0);
 
-    double const dz = track.dz(leadingVertex.position());
-    if (std::abs(dz) > maxTrackAbsDz_) {
-      continue;
+    double dz = 0.0;
+    if (leadingVertex != nullptr) {
+      dz = track.dz(leadingVertex->position());
+      if (std::abs(dz) > maxTrackAbsDz_) {
+        continue;
+      }
     }
     trackCutflow_->Fill(11.0);
 
@@ -884,16 +1145,20 @@ void SPRLowPUDataAnalyzer::analyze(edm::Event const& event, edm::EventSetup cons
 
     ++numberOfSelectedTracks;
     selectedTrackP_->Fill(track.p());
+    selectedTrackPVarBins_->Fill(track.p());
     selectedTrackPt_->Fill(track.pt());
+    selectedTrackPtVarBins_->Fill(track.pt());
     selectedTrackEta_->Fill(track.eta());
     selectedTrackPhi_->Fill(track.phi());
     selectedTrackNormalizedChi2_->Fill(track.normalizedChi2());
     selectedTrackRelativePError_->Fill(relativePError);
     selectedTrackTrackerLayers_->Fill(trackerLayers);
     selectedTrackPixelLayers_->Fill(pixelLayers);
-    selectedTrackDxy_->Fill(dxy);
-    selectedTrackDz_->Fill(dz);
-    selectedTrackSamePVRelativeIsolation_->Fill(samePVRelativeIsolation);
+    if (leadingVertex != nullptr) {
+      selectedTrackDxy_->Fill(dxy);
+      selectedTrackDz_->Fill(dz);
+      selectedTrackSamePVRelativeIsolation_->Fill(samePVRelativeIsolation);
+    }
     selectedTrackAllVertexRelativeIsolation_->Fill(allVertexRelativeIsolation);
 
     reco::TrackRef const trackRef(tracksHandle, trackIndex);
@@ -903,6 +1168,7 @@ void SPRLowPUDataAnalyzer::analyze(edm::Event const& event, edm::EventSetup cons
     if (muonMatch.hasExactMatch()) {
       muonIDSummary_->Fill(2.0);
       exactMuonMatchedTrackP_->Fill(track.p());
+      exactMuonMatchedTrackPVarBins_->Fill(track.p());
     }
     if (muonMatch.passesSoft) {
       muonIDSummary_->Fill(3.0);
@@ -913,8 +1179,10 @@ void SPRLowPUDataAnalyzer::analyze(edm::Event const& event, edm::EventSetup cons
     if (muonMatch.isMuonTagged()) {
       muonIDSummary_->Fill(5.0);
       muonTaggedTrackP_->Fill(track.p());
+      muonTaggedTrackPVarBins_->Fill(track.p());
     } else {
       nonMuonTrackP_->Fill(track.p());
+      nonMuonTrackPVarBins_->Fill(track.p());
     }
     if (muonMatch.passesMedium) {
       muonIDSummary_->Fill(6.0);
@@ -936,15 +1204,19 @@ void SPRLowPUDataAnalyzer::analyze(edm::Event const& event, edm::EventSetup cons
     }
 
     exactMuonMatchEfficiencyVsP_->Fill(track.p(), muonMatch.hasExactMatch());
+    exactMuonMatchEfficiencyVsPVarBins_->Fill(track.p(), muonMatch.hasExactMatch());
     exactMuonMatchEfficiencyVsEta_->Fill(track.eta(), muonMatch.hasExactMatch());
     muonTagEfficiencyVsP_->Fill(track.p(), muonMatch.isMuonTagged());
+    muonTagEfficiencyVsPVarBins_->Fill(track.p(), muonMatch.isMuonTagged());
     muonTagEfficiencyVsEta_->Fill(track.eta(), muonMatch.isMuonTagged());
 
     fillPFLinkingDiagnostics(trackRef, track, pfBlocks, numberOfGoodVertices, muonMatch);
   }
 
   numberOfSelectedTracks_->Fill(numberOfSelectedTracks);
-  meanSelectedTracksVsGoodVertices_->Fill(numberOfGoodVertices, numberOfSelectedTracks);
+  if (requirePrimaryVertex_) {
+    meanSelectedTracksVsGoodVertices_->Fill(numberOfGoodVertices, numberOfSelectedTracks);
+  }
   if (numberOfSelectedTracks > 0) {
     eventCutflow_->Fill(4.0);
   }
@@ -962,7 +1234,7 @@ bool SPRLowPUDataAnalyzer::isIsolationNeighbor(reco::Track const& track) const {
 
 std::pair<double, double> SPRLowPUDataAnalyzer::chargedIsolation(std::size_t candidateIndex,
                                                                  reco::TrackCollection const& tracks,
-                                                                 reco::Vertex const& leadingVertex) const {
+                                                                 reco::Vertex const* leadingVertex) const {
   double samePVIsolation = 0.0;
   double allVertexIsolation = 0.0;
   double const isolationCone2 = isolationCone_ * isolationCone_;
@@ -982,8 +1254,8 @@ std::pair<double, double> SPRLowPUDataAnalyzer::chargedIsolation(std::size_t can
     }
 
     allVertexIsolation += neighbor.pt();
-    if (std::abs(neighbor.dxy(leadingVertex.position())) < maxTrackAbsDxy_ &&
-        std::abs(neighbor.dz(leadingVertex.position())) < maxTrackAbsDz_) {
+    if (leadingVertex != nullptr && std::abs(neighbor.dxy(leadingVertex->position())) < maxTrackAbsDxy_ &&
+        std::abs(neighbor.dz(leadingVertex->position())) < maxTrackAbsDz_) {
       samePVIsolation += neighbor.pt();
     }
   }
@@ -993,7 +1265,7 @@ std::pair<double, double> SPRLowPUDataAnalyzer::chargedIsolation(std::size_t can
 
 SPRLowPUDataAnalyzer::MuonMatchResult SPRLowPUDataAnalyzer::matchMuon(reco::TrackRef const& trackRef,
                                                                       reco::MuonCollection const& muons,
-                                                                      reco::Vertex const& leadingVertex) const {
+                                                                      reco::Vertex const* leadingVertex) const {
   MuonMatchResult result;
   for (auto const& muonObject : muons) {
     reco::TrackRef const& innerTrack = muonObject.innerTrack();
@@ -1002,10 +1274,12 @@ SPRLowPUDataAnalyzer::MuonMatchResult SPRLowPUDataAnalyzer::matchMuon(reco::Trac
     }
 
     ++result.multiplicity;
-    result.passesSoft = result.passesSoft || muon::isSoftMuon(muonObject, leadingVertex);
+    if (leadingVertex != nullptr) {
+      result.passesSoft = result.passesSoft || muon::isSoftMuon(muonObject, *leadingVertex);
+      result.passesTight = result.passesTight || muon::isTightMuon(muonObject, *leadingVertex);
+    }
     result.passesLoose = result.passesLoose || muon::isLooseMuon(muonObject);
     result.passesMedium = result.passesMedium || muon::isMediumMuon(muonObject);
-    result.passesTight = result.passesTight || muon::isTightMuon(muonObject, leadingVertex);
   }
   return result;
 }
@@ -1045,6 +1319,7 @@ void SPRLowPUDataAnalyzer::fillPFLinkingDiagnostics(reco::TrackRef const& trackR
     pfLinkingCutflow_->Fill(2.0);
   } else {
     noPFBlockMatchTrackP_->Fill(track.p());
+    noPFBlockMatchTrackPVarBins_->Fill(track.p());
   }
 
 
@@ -1052,6 +1327,7 @@ void SPRLowPUDataAnalyzer::fillPFLinkingDiagnostics(reco::TrackRef const& trackR
     pfLinkingCutflow_->Fill(3.0);
   } else if (matches.size() > 1) {
     multiplePFBlockMatchesTrackP_->Fill(track.p());
+    multiplePFBlockMatchesTrackPVarBins_->Fill(track.p());
   }
 
   bool hasLinkedECAL = false;
@@ -1093,112 +1369,68 @@ void SPRLowPUDataAnalyzer::fillPFLinkingDiagnostics(reco::TrackRef const& trackR
     matchedPFBlockNumberOfHOElements_->Fill(numberOfHOElements);
     matchedPFBlockNumberOfOtherElements_->Fill(numberOfOtherElements);
 
-    //
-    // In the block, get the calorimeter cluster PFBlockElements that are linked to this track
-    //
-    std::multimap<double, unsigned int> linkedECAL;
-    std::multimap<double, unsigned int> linkedHCAL;
-    std::multimap<double, unsigned int> linkedHO;
-    block.associatedElements(trackElementIndex, block.linkData(), linkedECAL, reco::PFBlockElement::ECAL, reco::PFBlock::LINKTEST_RECHIT);
-    block.associatedElements(trackElementIndex, block.linkData(), linkedHCAL, reco::PFBlockElement::HCAL, reco::PFBlock::LINKTEST_RECHIT);
-    block.associatedElements(trackElementIndex, block.linkData(), linkedHO,   reco::PFBlockElement::HO,   reco::PFBlock::LINKTEST_RECHIT);
-
-    //====================================
-    //
-    //
-    //
-    //====================================
-    auto const clusterIsClosestToSelectedTrack = [&](unsigned int clusterElementIndex) {
-      std::multimap<double, unsigned int> linkedTracks;
-      block.associatedElements(clusterElementIndex, block.linkData(), linkedTracks, reco::PFBlockElement::TRACK, reco::PFBlock::LINKTEST_ALL);
-      return !linkedTracks.empty() && linkedTracks.begin()->second == trackElementIndex;
+    struct ClosestLinkedCluster {
+      reco::PFClusterRef cluster;
+      double distance = -1.0;
+      unsigned int validLinkMultiplicity = 0;
     };
 
-    //
-    // ECAL
-    //
-    unsigned int numberOfLinkedECALClusters = 0;
-    double linkedECALEnergy = 0.0;
-    double closestTrackECALEnergy = 0.0;
+    // PFBlock::associatedElements() sorts the linked elements by increasing
+    // stored link distance. Select the first valid PFClusterRef of each type,
+    // while retaining the full valid-link multiplicity as a diagnostic.
+    auto const closestLinkedCluster = [&](reco::PFBlockElement::Type clusterType) {
+      ClosestLinkedCluster result;
+      std::multimap<double, unsigned int> linkedClusters;
+      block.associatedElements(
+          trackElementIndex, block.linkData(), linkedClusters, clusterType, reco::PFBlock::LINKTEST_ALL);
 
-    for (auto const& [distance, elementIndex] : linkedECAL) {
-      reco::PFClusterRef const& clusterRef = elements[elementIndex].clusterRef();
+      for (auto const& [distance, elementIndex] : linkedClusters) {
+        reco::PFClusterRef const& clusterRef = elements[elementIndex].clusterRef();
+        if (clusterRef.isNull() || !clusterRef.isAvailable()) {
+          continue;
+        }
 
-      if (clusterRef.isNonnull() && clusterRef.isAvailable()) {
-        ++numberOfLinkedECALClusters;
-        trackECALLinkDistance_->Fill(distance);
-        linkedECALEnergy += clusterRef->energy();
-        if (clusterIsClosestToSelectedTrack(elementIndex)) {
-          closestTrackECALEnergy += clusterRef->energy();
+        ++result.validLinkMultiplicity;
+        if (result.cluster.isNull()) {
+          result.cluster = clusterRef;
+          result.distance = distance;
         }
       }
+
+      return result;
+    };
+
+    ClosestLinkedCluster const closestLinkedECAL = closestLinkedCluster(reco::PFBlockElement::ECAL);
+    ClosestLinkedCluster const closestLinkedHCAL = closestLinkedCluster(reco::PFBlockElement::HCAL);
+    ClosestLinkedCluster const closestLinkedHO = closestLinkedCluster(reco::PFBlockElement::HO);
+
+    linkedECALClusterMultiplicity_->Fill(closestLinkedECAL.validLinkMultiplicity);
+    linkedHCALClusterMultiplicity_->Fill(closestLinkedHCAL.validLinkMultiplicity);
+    linkedHOClusterMultiplicity_->Fill(closestLinkedHO.validLinkMultiplicity);
+
+    hasLinkedECAL = closestLinkedECAL.cluster.isNonnull();
+    hasLinkedHCAL = closestLinkedHCAL.cluster.isNonnull();
+    bool const hasLinkedHO = closestLinkedHO.cluster.isNonnull();
+
+    if (hasLinkedECAL) {
+      trackECALLinkDistance_->Fill(closestLinkedECAL.distance);
+    }
+    if (hasLinkedHCAL) {
+      trackHCALLinkDistance_->Fill(closestLinkedHCAL.distance);
+    }
+    if (hasLinkedHO) {
+      trackHOLinkDistance_->Fill(closestLinkedHO.distance);
     }
 
-    //
-    // HCAL
-    //
-    unsigned int numberOfLinkedHCALClusters = 0;
-    double linkedHCALEnergy = 0.0;
-    double closestTrackHCALEnergy = 0.0;
-
-    for (auto const& [distance, elementIndex] : linkedHCAL) {
-      reco::PFClusterRef const& clusterRef = elements[elementIndex].clusterRef();
-
-      if (clusterRef.isNonnull() && clusterRef.isAvailable()) {
-        ++numberOfLinkedHCALClusters;
-        trackHCALLinkDistance_->Fill(distance);
-        linkedHCALEnergy += clusterRef->energy();
-
-        if (clusterIsClosestToSelectedTrack(elementIndex)) {
-          closestTrackHCALEnergy += clusterRef->energy();
-        }
-      }
-    }
-
-    //
-    // HO
-    //
-    unsigned int numberOfLinkedHOClusters = 0;
-    double linkedHOEnergy = 0.0;
-
-    for (auto const& [distance, elementIndex] : linkedHO) {
-      reco::PFClusterRef const& clusterRef = elements[elementIndex].clusterRef();
-
-      if (clusterRef.isNonnull() && clusterRef.isAvailable()) {
-        ++numberOfLinkedHOClusters;
-        trackHOLinkDistance_->Fill(distance);
-        linkedHOEnergy += clusterRef->energy();
-      }
-    }
-
-    linkedECALClusterMultiplicity_->Fill(numberOfLinkedECALClusters);
-    linkedHCALClusterMultiplicity_->Fill(numberOfLinkedHCALClusters);
-    linkedHOClusterMultiplicity_->Fill(numberOfLinkedHOClusters);
-
-    hasLinkedECAL = numberOfLinkedECALClusters > 0;
-    hasLinkedHCAL = numberOfLinkedHCALClusters > 0;
+    double const linkedECALEnergy = hasLinkedECAL ? closestLinkedECAL.cluster->energy() : 0.0;
+    double const linkedHCALEnergy = hasLinkedHCAL ? closestLinkedHCAL.cluster->energy() : 0.0;
+    double const linkedHOEnergy = hasLinkedHO ? closestLinkedHO.cluster->energy() : 0.0;
 
     double const linkedECALPlusHCALEnergy = linkedECALEnergy + linkedHCALEnergy;
     double const linkedECALResponse = linkedECALEnergy / track.p();
     double const linkedHCALResponse = linkedHCALEnergy / track.p();
     double const linkedECALPlusHCALResponse = linkedECALPlusHCALEnergy / track.p();
     double const linkedECALPlusHCALPlusHOResponse = (linkedECALPlusHCALEnergy + linkedHOEnergy) / track.p();
-    double const closestTrackECALPlusHCALResponse = (closestTrackECALEnergy + closestTrackHCALEnergy) / track.p();
-
-    //====================================
-    //
-    // PF hadron calibration
-    //
-    //====================================
-    double pfHadronCalibratedLinkedECALEnergy = linkedECALEnergy;
-    double pfHadronCalibratedLinkedHCALEnergy = linkedHCALEnergy;
-    pfEnergyCalibration_.energyEmHad(track.p(), pfHadronCalibratedLinkedECALEnergy, pfHadronCalibratedLinkedHCALEnergy, track.eta(), track.phi());
-
-    double const pfHadronCalibratedLinkedECALPlusHCALEnergy =
-        pfHadronCalibratedLinkedECALEnergy + pfHadronCalibratedLinkedHCALEnergy;
-    double const pfHadronCalibratedLinkedECALResponse = pfHadronCalibratedLinkedECALEnergy / track.p();
-    double const pfHadronCalibratedLinkedHCALResponse = pfHadronCalibratedLinkedHCALEnergy / track.p();
-    double const pfHadronCalibratedLinkedECALPlusHCALResponse = pfHadronCalibratedLinkedECALPlusHCALEnergy / track.p();
 
     linkedECALEnergy_->Fill(linkedECALEnergy);
     linkedHCALEnergy_->Fill(linkedHCALEnergy);
@@ -1208,65 +1440,130 @@ void SPRLowPUDataAnalyzer::fillPFLinkingDiagnostics(reco::TrackRef const& trackR
     linkedHCALResponse_->Fill(linkedHCALResponse);
     linkedECALPlusHCALResponse_->Fill(linkedECALPlusHCALResponse);
     linkedECALPlusHCALPlusHOResponse_->Fill(linkedECALPlusHCALPlusHOResponse);
-    closestTrackECALPlusHCALResponse_->Fill(closestTrackECALPlusHCALResponse);
-
-    pfHadronCalibratedLinkedECALEnergy_->Fill(pfHadronCalibratedLinkedECALEnergy);
-    pfHadronCalibratedLinkedHCALEnergy_->Fill(pfHadronCalibratedLinkedHCALEnergy);
-    pfHadronCalibratedLinkedECALPlusHCALEnergy_->Fill(pfHadronCalibratedLinkedECALPlusHCALEnergy);
-    pfHadronCalibratedLinkedECALResponse_->Fill(pfHadronCalibratedLinkedECALResponse);
-    pfHadronCalibratedLinkedHCALResponse_->Fill(pfHadronCalibratedLinkedHCALResponse);
-    pfHadronCalibratedLinkedECALPlusHCALResponse_->Fill(pfHadronCalibratedLinkedECALPlusHCALResponse);
-    pfHadronCalibrationResponseChange_->Fill(pfHadronCalibratedLinkedECALPlusHCALResponse - linkedECALPlusHCALResponse);
     if (linkedECALPlusHCALEnergy > 0.0) {
       linkedECALEnergyFraction_->Fill(linkedECALEnergy / linkedECALPlusHCALEnergy);
-      pfHadronCalibrationFactor_->Fill(pfHadronCalibratedLinkedECALPlusHCALEnergy / linkedECALPlusHCALEnergy);
     }
 
     linkedECALEnergyVsLinkedHCALEnergy_->Fill(linkedECALEnergy, linkedHCALEnergy);
     linkedECALPlusHCALResponseVsP_->Fill(track.p(), linkedECALPlusHCALResponse);
+    linkedECALPlusHCALResponseVsPVarBins_->Fill(track.p(), linkedECALPlusHCALResponse);
     linkedECALPlusHCALResponseVsEta_->Fill(track.eta(), linkedECALPlusHCALResponse);
-    linkedECALPlusHCALResponseVsGoodVertices_->Fill(numberOfGoodVertices, linkedECALPlusHCALResponse);
     linkedECALPlusHCALResponseVsPFBlockTracks_->Fill(numberOfTrackElements, linkedECALPlusHCALResponse);
-    closestTrackECALPlusHCALResponseVsP_->Fill(track.p(), closestTrackECALPlusHCALResponse);
     meanLinkedECALPlusHCALResponseVsP_->Fill(track.p(), linkedECALPlusHCALResponse);
+    meanLinkedECALPlusHCALResponseVsPVarBins_->Fill(track.p(), linkedECALPlusHCALResponse);
     meanLinkedECALPlusHCALResponseVsEta_->Fill(track.eta(), linkedECALPlusHCALResponse);
-    meanLinkedECALPlusHCALResponseVsGoodVertices_->Fill(numberOfGoodVertices, linkedECALPlusHCALResponse);
     meanLinkedECALPlusHCALResponseVsPFBlockTracks_->Fill(numberOfTrackElements, linkedECALPlusHCALResponse);
-    pfHadronCalibratedLinkedECALPlusHCALResponseVsP_->Fill(track.p(), pfHadronCalibratedLinkedECALPlusHCALResponse);
-    pfHadronCalibratedLinkedECALPlusHCALResponseVsEta_->Fill(track.eta(), pfHadronCalibratedLinkedECALPlusHCALResponse);
-    pfHadronCalibratedLinkedECALPlusHCALResponseVsGoodVertices_->Fill(numberOfGoodVertices,
-                                                                      pfHadronCalibratedLinkedECALPlusHCALResponse);
-    pfHadronCalibratedLinkedECALPlusHCALResponseVsPFBlockTracks_->Fill(numberOfTrackElements,
-                                                                       pfHadronCalibratedLinkedECALPlusHCALResponse);
-    rawVsPFHadronCalibratedLinkedECALPlusHCALResponse_->Fill(linkedECALPlusHCALResponse,
-                                                             pfHadronCalibratedLinkedECALPlusHCALResponse);
-    meanPFHadronCalibratedLinkedECALPlusHCALResponseVsP_->Fill(track.p(), pfHadronCalibratedLinkedECALPlusHCALResponse);
-    meanPFHadronCalibratedLinkedECALPlusHCALResponseVsEta_->Fill(track.eta(),
-                                                                 pfHadronCalibratedLinkedECALPlusHCALResponse);
-    meanPFHadronCalibratedLinkedECALPlusHCALResponseVsGoodVertices_->Fill(numberOfGoodVertices,
-                                                                          pfHadronCalibratedLinkedECALPlusHCALResponse);
-    meanPFHadronCalibratedLinkedECALPlusHCALResponseVsPFBlockTracks_->Fill(
-        numberOfTrackElements, pfHadronCalibratedLinkedECALPlusHCALResponse);
+    if (requirePrimaryVertex_) {
+      linkedECALPlusHCALResponseVsGoodVertices_->Fill(numberOfGoodVertices, linkedECALPlusHCALResponse);
+      meanLinkedECALPlusHCALResponseVsGoodVertices_->Fill(numberOfGoodVertices, linkedECALPlusHCALResponse);
+    }
+
+    // Apply the PF hadron calibration only when a closest linked HCAL cluster
+    // is available, using the HCAL cluster position as in PFAlgo.
+    if (hasLinkedHCAL) {
+      prePFHadronCalibrationLinkedECALEnergy_->Fill(linkedECALEnergy);
+      prePFHadronCalibrationLinkedHCALEnergy_->Fill(linkedHCALEnergy);
+      prePFHadronCalibrationLinkedECALPlusHCALEnergy_->Fill(linkedECALPlusHCALEnergy);
+      prePFHadronCalibrationLinkedECALResponse_->Fill(linkedECALResponse);
+      prePFHadronCalibrationLinkedHCALResponse_->Fill(linkedHCALResponse);
+      prePFHadronCalibrationLinkedECALPlusHCALResponse_->Fill(linkedECALPlusHCALResponse);
+      prePFHadronCalibrationLinkedECALPlusHCALResponseVsP_->Fill(track.p(), linkedECALPlusHCALResponse);
+      prePFHadronCalibrationLinkedECALPlusHCALResponseVsPVarBins_->Fill(track.p(), linkedECALPlusHCALResponse);
+      prePFHadronCalibrationLinkedECALPlusHCALResponseVsEta_->Fill(track.eta(), linkedECALPlusHCALResponse);
+      prePFHadronCalibrationLinkedECALPlusHCALResponseVsPFBlockTracks_->Fill(numberOfTrackElements,
+                                                                             linkedECALPlusHCALResponse);
+      meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsP_->Fill(track.p(), linkedECALPlusHCALResponse);
+      meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsPVarBins_->Fill(track.p(), linkedECALPlusHCALResponse);
+      meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsEta_->Fill(track.eta(), linkedECALPlusHCALResponse);
+      meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsPFBlockTracks_->Fill(numberOfTrackElements,
+                                                                                 linkedECALPlusHCALResponse);
+      if (requirePrimaryVertex_) {
+        prePFHadronCalibrationLinkedECALPlusHCALResponseVsGoodVertices_->Fill(numberOfGoodVertices,
+                                                                              linkedECALPlusHCALResponse);
+        meanPrePFHadronCalibrationLinkedECALPlusHCALResponseVsGoodVertices_->Fill(numberOfGoodVertices,
+                                                                                  linkedECALPlusHCALResponse);
+      }
+
+      double pfHadronCalibratedLinkedECALEnergy = linkedECALEnergy;
+      double pfHadronCalibratedLinkedHCALEnergy = linkedHCALEnergy;
+      auto const& hcalPosition = closestLinkedHCAL.cluster->positionREP();
+      pfEnergyCalibration_.energyEmHad(track.p(),
+                                       pfHadronCalibratedLinkedECALEnergy,
+                                       pfHadronCalibratedLinkedHCALEnergy,
+                                       hcalPosition.Eta(),
+                                       hcalPosition.Phi());
+
+      double const pfHadronCalibratedLinkedECALPlusHCALEnergy =
+          pfHadronCalibratedLinkedECALEnergy + pfHadronCalibratedLinkedHCALEnergy;
+      double const pfHadronCalibratedLinkedECALResponse = pfHadronCalibratedLinkedECALEnergy / track.p();
+      double const pfHadronCalibratedLinkedHCALResponse = pfHadronCalibratedLinkedHCALEnergy / track.p();
+      double const pfHadronCalibratedLinkedECALPlusHCALResponse =
+          pfHadronCalibratedLinkedECALPlusHCALEnergy / track.p();
+
+      pfHadronCalibratedLinkedECALEnergy_->Fill(pfHadronCalibratedLinkedECALEnergy);
+      pfHadronCalibratedLinkedHCALEnergy_->Fill(pfHadronCalibratedLinkedHCALEnergy);
+      pfHadronCalibratedLinkedECALPlusHCALEnergy_->Fill(pfHadronCalibratedLinkedECALPlusHCALEnergy);
+      pfHadronCalibratedLinkedECALResponse_->Fill(pfHadronCalibratedLinkedECALResponse);
+      pfHadronCalibratedLinkedHCALResponse_->Fill(pfHadronCalibratedLinkedHCALResponse);
+      pfHadronCalibratedLinkedECALPlusHCALResponse_->Fill(pfHadronCalibratedLinkedECALPlusHCALResponse);
+      pfHadronCalibrationResponseChange_->Fill(pfHadronCalibratedLinkedECALPlusHCALResponse -
+                                                linkedECALPlusHCALResponse);
+      if (linkedECALPlusHCALEnergy > 0.0) {
+        pfHadronCalibrationFactor_->Fill(pfHadronCalibratedLinkedECALPlusHCALEnergy /
+                                         linkedECALPlusHCALEnergy);
+      }
+
+      pfHadronCalibratedLinkedECALPlusHCALResponseVsP_->Fill(track.p(),
+                                                              pfHadronCalibratedLinkedECALPlusHCALResponse);
+      pfHadronCalibratedLinkedECALPlusHCALResponseVsPVarBins_->Fill(
+          track.p(), pfHadronCalibratedLinkedECALPlusHCALResponse);
+      pfHadronCalibratedLinkedECALPlusHCALResponseVsEta_->Fill(
+          track.eta(), pfHadronCalibratedLinkedECALPlusHCALResponse);
+      pfHadronCalibratedLinkedECALPlusHCALResponseVsPFBlockTracks_->Fill(
+          numberOfTrackElements, pfHadronCalibratedLinkedECALPlusHCALResponse);
+      rawVsPFHadronCalibratedLinkedECALPlusHCALResponse_->Fill(
+          linkedECALPlusHCALResponse, pfHadronCalibratedLinkedECALPlusHCALResponse);
+      meanPFHadronCalibratedLinkedECALPlusHCALResponseVsP_->Fill(
+          track.p(), pfHadronCalibratedLinkedECALPlusHCALResponse);
+      meanPFHadronCalibratedLinkedECALPlusHCALResponseVsPVarBins_->Fill(
+          track.p(), pfHadronCalibratedLinkedECALPlusHCALResponse);
+      meanPFHadronCalibratedLinkedECALPlusHCALResponseVsEta_->Fill(
+          track.eta(), pfHadronCalibratedLinkedECALPlusHCALResponse);
+      meanPFHadronCalibratedLinkedECALPlusHCALResponseVsPFBlockTracks_->Fill(
+          numberOfTrackElements, pfHadronCalibratedLinkedECALPlusHCALResponse);
+      if (requirePrimaryVertex_) {
+        pfHadronCalibratedLinkedECALPlusHCALResponseVsGoodVertices_->Fill(
+            numberOfGoodVertices, pfHadronCalibratedLinkedECALPlusHCALResponse);
+        meanPFHadronCalibratedLinkedECALPlusHCALResponseVsGoodVertices_->Fill(
+            numberOfGoodVertices, pfHadronCalibratedLinkedECALPlusHCALResponse);
+      }
+    }
 
     if (muonMatch.isMuonTagged()) {
       muonTaggedLinkedECALPlusHCALResponse_->Fill(linkedECALPlusHCALResponse);
       muonTaggedLinkedECALPlusHCALResponseVsP_->Fill(track.p(), linkedECALPlusHCALResponse);
+      muonTaggedLinkedECALPlusHCALResponseVsPVarBins_->Fill(track.p(), linkedECALPlusHCALResponse);
       meanMuonTaggedLinkedECALPlusHCALResponseVsP_->Fill(track.p(), linkedECALPlusHCALResponse);
+      meanMuonTaggedLinkedECALPlusHCALResponseVsPVarBins_->Fill(track.p(), linkedECALPlusHCALResponse);
     } else {
       nonMuonLinkedECALPlusHCALResponse_->Fill(linkedECALPlusHCALResponse);
       nonMuonLinkedECALPlusHCALResponseVsP_->Fill(track.p(), linkedECALPlusHCALResponse);
+      nonMuonLinkedECALPlusHCALResponseVsPVarBins_->Fill(track.p(), linkedECALPlusHCALResponse);
       meanNonMuonLinkedECALPlusHCALResponseVsP_->Fill(track.p(), linkedECALPlusHCALResponse);
+      meanNonMuonLinkedECALPlusHCALResponseVsPVarBins_->Fill(track.p(), linkedECALPlusHCALResponse);
     }
 
     if (hasLinkedECAL) {
       pfLinkingCutflow_->Fill(4.0);
     } else {
       noLinkedECALTrackP_->Fill(track.p());
+      noLinkedECALTrackPVarBins_->Fill(track.p());
     }
     if (hasLinkedHCAL) {
       pfLinkingCutflow_->Fill(5.0);
     } else {
       noLinkedHCALTrackP_->Fill(track.p());
+      noLinkedHCALTrackPVarBins_->Fill(track.p());
     }
     if (hasLinkedECAL || hasLinkedHCAL) {
       pfLinkingCutflow_->Fill(6.0);
@@ -1277,17 +1574,23 @@ void SPRLowPUDataAnalyzer::fillPFLinkingDiagnostics(reco::TrackRef const& trackR
   }
 
   pfBlockMatchEfficiencyVsP_->Fill(track.p(), hasPFBlockMatch);
+  pfBlockMatchEfficiencyVsPVarBins_->Fill(track.p(), hasPFBlockMatch);
   pfBlockMatchEfficiencyVsEta_->Fill(track.eta(), hasPFBlockMatch);
-  pfBlockMatchEfficiencyVsGoodVertices_->Fill(numberOfGoodVertices, hasPFBlockMatch);
   uniquePFBlockMatchEfficiencyVsP_->Fill(track.p(), hasUniquePFBlockMatch);
+  uniquePFBlockMatchEfficiencyVsPVarBins_->Fill(track.p(), hasUniquePFBlockMatch);
   uniquePFBlockMatchEfficiencyVsEta_->Fill(track.eta(), hasUniquePFBlockMatch);
-  uniquePFBlockMatchEfficiencyVsGoodVertices_->Fill(numberOfGoodVertices, hasUniquePFBlockMatch);
   linkedECALEfficiencyVsP_->Fill(track.p(), hasLinkedECAL);
+  linkedECALEfficiencyVsPVarBins_->Fill(track.p(), hasLinkedECAL);
   linkedECALEfficiencyVsEta_->Fill(track.eta(), hasLinkedECAL);
-  linkedECALEfficiencyVsGoodVertices_->Fill(numberOfGoodVertices, hasLinkedECAL);
   linkedHCALEfficiencyVsP_->Fill(track.p(), hasLinkedHCAL);
+  linkedHCALEfficiencyVsPVarBins_->Fill(track.p(), hasLinkedHCAL);
   linkedHCALEfficiencyVsEta_->Fill(track.eta(), hasLinkedHCAL);
-  linkedHCALEfficiencyVsGoodVertices_->Fill(numberOfGoodVertices, hasLinkedHCAL);
+  if (requirePrimaryVertex_) {
+    pfBlockMatchEfficiencyVsGoodVertices_->Fill(numberOfGoodVertices, hasPFBlockMatch);
+    uniquePFBlockMatchEfficiencyVsGoodVertices_->Fill(numberOfGoodVertices, hasUniquePFBlockMatch);
+    linkedECALEfficiencyVsGoodVertices_->Fill(numberOfGoodVertices, hasLinkedECAL);
+    linkedHCALEfficiencyVsGoodVertices_->Fill(numberOfGoodVertices, hasLinkedHCAL);
+  }
 }
 
 void SPRLowPUDataAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
@@ -1296,6 +1599,7 @@ void SPRLowPUDataAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& desc
   description.add<edm::InputTag>("vertices", edm::InputTag("offlinePrimaryVertices"));
   description.add<edm::InputTag>("pfBlocks", edm::InputTag("particleFlowBlock"));
   description.add<edm::InputTag>("muons", edm::InputTag("muons"));
+  description.add<bool>("requirePrimaryVertex", true);
   description.add<double>("minVertexNdof", 4.0);
   description.add<double>("maxVertexAbsZ", 24.0);
   description.add<double>("maxVertexRho", 2.0);

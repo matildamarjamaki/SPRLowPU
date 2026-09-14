@@ -7,6 +7,7 @@ sprLowPUDataAnalyzer = cms.EDAnalyzer(
     vertices=cms.InputTag("offlinePrimaryVertices"),
     pfBlocks=cms.InputTag("particleFlowBlock"),
     muons=cms.InputTag("muons"),
+    requirePrimaryVertex=cms.bool(True),
     minVertexNdof=cms.double(4.0),
     maxVertexAbsZ=cms.double(24.0),
     maxVertexRho=cms.double(2.0),
