@@ -3,9 +3,13 @@ import FWCore.ParameterSet.Config as cms
 
 sprLowPUDataAnalyzer = cms.EDAnalyzer(
     "SPRLowPUDataAnalyzer",
+    doV0Tagging=cms.bool(False),
+    lambdas=cms.InputTag("generalV0Candidates", "Lambda"),
+    kshorts=cms.InputTag("generalV0Candidates", "Kshort"),
     tracks=cms.InputTag("generalTracks"),
     vertices=cms.InputTag("offlinePrimaryVertices"),
     pfBlocks=cms.InputTag("particleFlowBlock"),
+    pfCandidates=cms.InputTag("particleFlow"),
     muons=cms.InputTag("muons"),
     requirePrimaryVertex=cms.bool(True),
     minVertexNdof=cms.double(4.0),
@@ -14,6 +18,8 @@ sprLowPUDataAnalyzer = cms.EDAnalyzer(
     trackQuality=cms.string("highPurity"),
     minTrackPt=cms.double(1.0),
     minTrackP=cms.double(3.0),
+    minV0TrackPt=cms.double(1.0),
+    minV0TrackP=cms.double(3.0),
     maxTrackAbsEta=cms.double(1.0),
     maxTrackNormalizedChi2=cms.double(5.0),
     maxTrackRelativePError=cms.double(0.1),

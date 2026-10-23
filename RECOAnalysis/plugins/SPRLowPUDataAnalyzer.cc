@@ -8,6 +8,10 @@
 #include "DataFormats/ParticleFlowReco/interface/PFBlock.h"
 #include "DataFormats/ParticleFlowReco/interface/PFBlockFwd.h"
 #include "DataFormats/ParticleFlowReco/interface/PFCluster.h"
+#include "DataFormats/ParticleFlowCandidate/interface/PFCandidate.h"
+#include "DataFormats/ParticleFlowCandidate/interface/PFCandidateFwd.h"
+#include "DataFormats/Candidate/interface/VertexCompositeCandidate.h"
+#include "DataFormats/RecoCandidate/interface/RecoChargedCandidate.h"
 #include "DataFormats/TrackReco/interface/Track.h"
 #include "DataFormats/TrackReco/interface/TrackFwd.h"
 #include "DataFormats/VertexReco/interface/Vertex.h"
@@ -31,6 +35,7 @@
 #include <cmath>
 #include <cstddef>
 #include <map>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -76,16 +81,21 @@ private:
                                 reco::Track const& track,
                                 reco::PFBlockCollection const& pfBlocks,
                                 unsigned int numberOfGoodVertices,
-                                MuonMatchResult const& muonMatch);
+                                MuonMatchResult const& muonMatch,
+                                reco::PFCandidate const* matchedPFCandidate);
 
+  edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> lambdaToken_;
+  edm::EDGetTokenT<reco::VertexCompositeCandidateCollection> kshortToken_;
   edm::EDGetTokenT<reco::TrackCollection> tracksToken_;
   edm::EDGetTokenT<reco::VertexCollection> verticesToken_;
   edm::EDGetTokenT<reco::PFBlockCollection> pfBlocksToken_;
+  edm::EDGetTokenT<reco::PFCandidateCollection> pfCandidatesToken_;
   edm::EDGetTokenT<reco::MuonCollection> muonsToken_;
   edm::ESGetToken<PerformancePayload, PFCalibrationRcd> pfCalibrationToken_;
 
   PFEnergyCalibration pfEnergyCalibration_;
 
+  bool doV0Tagging_;
   bool requirePrimaryVertex_;
   double minVertexNdof_;
   double maxVertexAbsZ_;
@@ -93,6 +103,8 @@ private:
   reco::TrackBase::TrackQuality trackQuality_;
   double minTrackPt_;
   double minTrackP_;
+  double minV0TrackPt_;
+  double minV0TrackP_;
   double maxTrackAbsEta_;
   double maxTrackNormalizedChi2_;
   double maxTrackRelativePError_;
@@ -105,6 +117,27 @@ private:
   double maxIsolationTrackAbsEta_;
   double maxRelativeIsolation_;
 
+  TH1D* v0CandidateCounts_;
+  TH1D* v0DaughterCutflow_;
+  TH1D* v0TrackSelectionCutflow_;
+  TH1D* v0WithoutPVCutsCutflow_;
+  TH1D* v0SpeciesCounts_;
+  TH1D* v0SpeciesPFMatches_;
+  TH1D* v0SpeciesMultiplicity_;
+  TH1D* v0SpeciesCombination_;
+  TH2D* v0SpeciesCutflow_;
+  TH2D* v0SpeciesPt_;
+  TH2D* v0SpeciesP_;
+  TH2D* v0SpeciesEta_;
+  TH2D* v0SpeciesPFResponse_;
+  TH2D* v0SpeciesResponseLinkCategory_;
+  TH2D* v0PFBlockLinkStatus_;
+  TH2D* v0PFVsLinkedResponse_;
+  TH2D* v0PFVsLinkedResponseAnyCluster_;
+  TH2D* v0PFVsLinkedResponseHCAL_;
+  TH2D* v0PFVsLinkedResponseNoCluster_;
+  TProfile* v0SpeciesResponseVsP_[4];
+  TProfile* v0SpeciesPositiveResponseVsP_[4];
   TH1D* eventCount_;
   TH1D* eventCutflow_;
   TH1D* trackCutflow_;
@@ -139,6 +172,52 @@ private:
   TH1D* muonTaggedTrackPVarBins_;
   TH1D* nonMuonTrackP_;
   TH1D* nonMuonTrackPVarBins_;
+  TH1D* neutralHadronMultiplicityLinkedHCAL_;
+  TH1D* neutralHadronEnergyFractionLinkedHCAL_;
+  TH1D* neutralHadronMultiplicitySameHCAL_;
+  TH1D* neutralHadronEnergyFractionSameHCAL_;
+  TH1D* neutralHadronMultiplicitySameBlock_;
+  TH1D* neutralHadronEnergyFractionSameBlock_;
+  TProfile* neutralSameBlockFractionVsP_;
+  TProfile* neutralSameHCALFractionVsP_;
+  TProfile* neutralLinkedHCALFractionVsP_;
+  TProfile* meanNeutralHadronFractionVsP_;
+  TProfile* meanNeutralHadronMultiplicityVsP_;
+  TH1D* pfCandidateMatchMultiplicity_;
+  TH1D* pfCandidateParticleId_;
+  TH2D* pfCandidateResponseVsParticleId_;
+  TH1D* pfCandidateECALPlusHCALEnergy_;
+  TH1D* pfCandidateECALPlusHCALResponse_;
+  TH2D* pfCandidateECALPlusHCALResponseVsPVarBins_;
+  TProfile* pfCandidateMatchEfficiencyVsPVarBins_;
+  TProfile* meanPFCandidateECALPlusHCALResponseVsPVarBins_;
+  TProfile* meanPFCandidateECALResponseVsPVarBins_;
+  TProfile* meanPFCandidateHCALResponseVsPVarBins_;
+  TH1D* pfCandidateToLinkedEnergyRatio_;
+  TProfile* meanPFCandidateToLinkedEnergyRatioVsPVarBins_;
+  TProfile* meanSameTrackPFCandidateResponseVsPVarBins_;
+  TProfile* meanSameTrackLinkedResponseVsPVarBins_;
+  TProfile* meanHCALLinkedPFCandidateResponseVsPVarBins_;
+  TProfile* meanHCALLinkedRawPFCandidateResponseVsPVarBins_;
+  TProfile* meanDeltaResponseSharedHCALVsP_;
+  TProfile* meanDeltaResponseNonSharedHCALVsP_;
+  TProfile* meanDeltaResponseMultiTrackBlockVsP_;
+  TProfile* meanDeltaResponseMultiHCALBlockVsP_;
+  TProfile* meanDeltaResponseMultiECALBlockVsP_;
+  TProfile* meanDeltaResponseSimpleBlockVsP_;
+  TProfile* meanDeltaResponseComplexBlockVsP_;
+  TProfile* meanPFResponseSimpleBlockVsP_;
+  TProfile* meanLinkedResponseSimpleBlockVsP_;
+  TProfile* meanPFResponseComplexBlockVsP_;
+  TProfile* meanLinkedResponseComplexBlockVsP_;
+  TH2D* hcalLinkedPFCandidateResponseVsPVarBins_;
+  TH2D* hcalLinkedRawPFCandidateResponseVsPVarBins_;
+  TProfile* hcalLinkedPFCandidateMatchEfficiencyVsPVarBins_;
+  TProfile* hcalLinkedChargedHadronEfficiencyVsPVarBins_;
+  TH2D* pfCandidateECALVsLinkedECAL_;
+  TH2D* pfCandidateHCALVsLinkedHCAL_;
+  TH2D* rawPFCandidateECALVsLinkedECAL_;
+  TH2D* rawPFCandidateHCALVsLinkedHCAL_;
   TH1D* pfLinkingCutflow_;
   TH1D* pfBlockMatchMultiplicity_;
   TH1D* matchedPFBlockNumberOfElements_;
@@ -253,11 +332,18 @@ private:
 };
 
 SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
-    : tracksToken_(consumes<reco::TrackCollection>(config.getParameter<edm::InputTag>("tracks"))),
+    : lambdaToken_(consumes<reco::VertexCompositeCandidateCollection>(
+          config.getParameter<edm::InputTag>("lambdas"))),
+      kshortToken_(consumes<reco::VertexCompositeCandidateCollection>(
+          config.getParameter<edm::InputTag>("kshorts"))),
+      tracksToken_(consumes<reco::TrackCollection>(config.getParameter<edm::InputTag>("tracks"))),
       verticesToken_(consumes<reco::VertexCollection>(config.getParameter<edm::InputTag>("vertices"))),
       pfBlocksToken_(consumes<reco::PFBlockCollection>(config.getParameter<edm::InputTag>("pfBlocks"))),
+      pfCandidatesToken_(consumes<reco::PFCandidateCollection>(
+          config.getParameter<edm::InputTag>("pfCandidates"))),
       muonsToken_(consumes<reco::MuonCollection>(config.getParameter<edm::InputTag>("muons"))),
       pfCalibrationToken_(esConsumes<edm::Transition::BeginRun>(edm::ESInputTag("", ""))),
+      doV0Tagging_(config.getParameter<bool>("doV0Tagging")),
       requirePrimaryVertex_(config.getParameter<bool>("requirePrimaryVertex")),
       minVertexNdof_(config.getParameter<double>("minVertexNdof")),
       maxVertexAbsZ_(config.getParameter<double>("maxVertexAbsZ")),
@@ -265,6 +351,8 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
       trackQuality_(reco::TrackBase::qualityByName(config.getParameter<std::string>("trackQuality"))),
       minTrackPt_(config.getParameter<double>("minTrackPt")),
       minTrackP_(config.getParameter<double>("minTrackP")),
+      minV0TrackPt_(config.getParameter<double>("minV0TrackPt")),
+      minV0TrackP_(config.getParameter<double>("minV0TrackP")),
       maxTrackAbsEta_(config.getParameter<double>("maxTrackAbsEta")),
       maxTrackNormalizedChi2_(config.getParameter<double>("maxTrackNormalizedChi2")),
       maxTrackRelativePError_(config.getParameter<double>("maxTrackRelativePError")),
@@ -279,6 +367,214 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
   usesResource(TFileService::kSharedResource);
 
   edm::Service<TFileService> fileService;
+  v0CandidateCounts_ = fileService->make<TH1D>(
+      "v0CandidateCounts", ";V0 candidate type;Candidates", 2, 0.5, 2.5);
+  v0CandidateCounts_->GetXaxis()->SetBinLabel(1, "Lambda / anti-Lambda");
+  v0CandidateCounts_->GetXaxis()->SetBinLabel(2, "Kshort");
+
+  v0DaughterCutflow_ = fileService->make<TH1D>(
+      "v0DaughterCutflow", ";V0 daughter selection;Tracks", 3, 0.5, 3.5);
+  v0DaughterCutflow_->GetXaxis()->SetBinLabel(1, "Valid V0 daughter");
+  v0DaughterCutflow_->GetXaxis()->SetBinLabel(2, "In generalTracks");
+  v0DaughterCutflow_->GetXaxis()->SetBinLabel(3, "Passed SPR selection");
+
+
+  v0SpeciesCounts_ = fileService->make<TH1D>(
+      "v0SpeciesCounts", ";V0 daughter hypothesis;Tracks",
+      4, 0.5, 4.5);
+
+  v0SpeciesPFMatches_ = fileService->make<TH1D>(
+      "v0SpeciesPFMatches",
+      ";V0 daughter hypothesis;Unique charged-hadron PF matches",
+      4, 0.5, 4.5);
+
+  v0SpeciesPFResponse_ = fileService->make<TH2D>(
+      "v0SpeciesPFResponse",
+      ";V0 daughter hypothesis;(ECAL+HCAL)/p",
+      4, 0.5, 4.5, 200, 0.0, 5.0);
+
+
+  v0SpeciesResponseLinkCategory_ = fileService->make<TH2D>(
+      "v0SpeciesResponseLinkCategory",
+      ";V0 daughter hypothesis;PF response and cluster-link category",
+      4, 0.5, 4.5, 6, 0.5, 6.5);
+
+  const char* v0ResponseLinkLabels[] = {
+      "zero, no cluster",
+      "low, no cluster",
+      "positive, no cluster",
+      "zero, linked",
+      "low, linked",
+      "positive, linked"};
+
+  for (int i = 1; i <= 6; ++i) {
+    v0SpeciesResponseLinkCategory_->GetYaxis()->SetBinLabel(
+        i, v0ResponseLinkLabels[i - 1]);
+  }
+
+  v0PFBlockLinkStatus_ = fileService->make<TH2D>(
+      "v0PFBlockLinkStatus",
+      ";V0 daughter hypothesis;PFBlock linking status",
+      4, 0.5, 4.5, 6, 0.5, 6.5);
+
+  v0PFVsLinkedResponse_ = fileService->make<TH2D>(
+      "v0PFVsLinkedResponse",
+      ";PF candidate (ECAL+HCAL)/p;closest linked clusters (ECAL+HCAL)/p",
+      100, 0.0, 5.0, 100, 0.0, 5.0);
+
+  v0PFVsLinkedResponseAnyCluster_ = fileService->make<TH2D>(
+      "v0PFVsLinkedResponse_anyCluster",
+      ";PF candidate (ECAL+HCAL)/p;linked clusters (ECAL+HCAL)/p",
+      100, 0.0, 5.0, 100, 0.0, 5.0);
+
+  v0PFVsLinkedResponseHCAL_ = fileService->make<TH2D>(
+      "v0PFVsLinkedResponse_HCAL",
+      ";PF candidate (ECAL+HCAL)/p;linked clusters (ECAL+HCAL)/p",
+      100, 0.0, 5.0, 100, 0.0, 5.0);
+
+  v0PFVsLinkedResponseNoCluster_ = fileService->make<TH2D>(
+      "v0PFVsLinkedResponse_noCluster",
+      ";PF candidate (ECAL+HCAL)/p;linked clusters (ECAL+HCAL)/p",
+      100, 0.0, 5.0, 100, 0.0, 5.0);
+
+  const char* v0LinkLabels[] = {
+      "PF matched", "No PFBlock", "Unique PFBlock",
+      "Multiple PFBlocks", "Linked ECAL", "Linked HCAL"};
+
+  for (int i = 1; i <= 6; ++i) {
+    v0PFBlockLinkStatus_->GetYaxis()->SetBinLabel(
+        i, v0LinkLabels[i - 1]);
+  }
+
+  const char* v0ProfileNames[] = {
+      "v0LambdaProtonResponseVsP",
+      "v0AntiLambdaAntiprotonResponseVsP",
+      "v0LambdaPionResponseVsP",
+      "v0KshortPionResponseVsP"};
+
+  // Extend only the V0 response profiles below 3 GeV.
+  // Keep the original SPR momentum bin edges unchanged.
+  const double v0LowPBins[] = {
+      1.0, 1.2, 1.4, 1.6, 1.8, 2.0, 2.3, 2.6
+  };
+
+  std::vector<double> v0PBins(
+      std::begin(v0LowPBins), std::end(v0LowPBins));
+  v0PBins.insert(
+      v0PBins.end(), trkPBins, trkPBins + nTrkPBins + 1);
+
+  for (int i = 0; i < 4; ++i) {
+    v0SpeciesResponseVsP_[i] = fileService->make<TProfile>(
+        v0ProfileNames[i],
+        ";track p [GeV];mean PF (ECAL+HCAL)/p",
+        static_cast<int>(v0PBins.size()) - 1,
+        v0PBins.data());
+  }
+
+  const char* v0PositiveProfileNames[] = {
+      "v0LambdaProtonPositiveResponseVsP",
+      "v0AntiLambdaAntiprotonPositiveResponseVsP",
+      "v0LambdaPionPositiveResponseVsP",
+      "v0KshortPionPositiveResponseVsP"};
+
+  for (int i = 0; i < 4; ++i) {
+    v0SpeciesPositiveResponseVsP_[i] = fileService->make<TProfile>(
+        v0PositiveProfileNames[i],
+        ";track p [GeV];mean PF (ECAL+HCAL)/p, E/p > 0",
+        static_cast<int>(v0PBins.size()) - 1,
+        v0PBins.data());
+  }
+
+  const char* v0SpeciesLabels[] = {
+      "Lambda proton", "anti-Lambda antiproton",
+      "Lambda pion", "Kshort pion"};
+
+  for (int i = 1; i <= 4; ++i) {
+    v0SpeciesCounts_->GetXaxis()->SetBinLabel(
+        i, v0SpeciesLabels[i - 1]);
+    v0SpeciesPFMatches_->GetXaxis()->SetBinLabel(
+        i, v0SpeciesLabels[i - 1]);
+    v0SpeciesPFResponse_->GetXaxis()->SetBinLabel(
+        i, v0SpeciesLabels[i - 1]);
+    v0SpeciesResponseLinkCategory_->GetXaxis()->SetBinLabel(
+        i, v0SpeciesLabels[i - 1]);
+    v0PFBlockLinkStatus_->GetXaxis()->SetBinLabel(
+        i, v0SpeciesLabels[i - 1]);
+  }
+
+
+  v0SpeciesMultiplicity_ = fileService->make<TH1D>(
+      "v0SpeciesMultiplicity",
+      ";Number of species hypotheses per selected V0 track;Tracks",
+      5, -0.5, 4.5);
+
+
+  v0SpeciesCombination_ = fileService->make<TH1D>(
+      "v0SpeciesCombination",
+      ";Species hypothesis bitmask;Tracks",
+      16, -0.5, 15.5);
+
+
+  v0SpeciesCutflow_ = fileService->make<TH2D>(
+      "v0SpeciesCutflow",
+      ";Selection step;Species hypothesis",
+      10, 0.5, 10.5,
+      4, 0.5, 4.5);
+
+  const char* v0Steps[] = {
+      "Matched track",
+      "High purity",
+      "pT",
+      "p",
+      "eta",
+      "normalized chi2",
+      "relative p error",
+      "tracker layers",
+      "pixel layers",
+      "PF match"
+  };
+
+  for (int i = 0; i < 10; ++i) {
+    v0SpeciesCutflow_->GetXaxis()->SetBinLabel(i + 1, v0Steps[i]);
+  }
+
+  v0SpeciesCutflow_->GetYaxis()->SetBinLabel(1, "Lambda proton");
+  v0SpeciesCutflow_->GetYaxis()->SetBinLabel(2, "anti-Lambda antiproton");
+  v0SpeciesCutflow_->GetYaxis()->SetBinLabel(3, "Lambda pion");
+  v0SpeciesCutflow_->GetYaxis()->SetBinLabel(4, "Kshort pion");
+
+
+  v0SpeciesPt_ = fileService->make<TH2D>(
+      "v0SpeciesPt",
+      ";Track p_{T} [GeV];Species hypothesis",
+      200, 0.0, 10.0,
+      4, 0.5, 4.5);
+
+  v0SpeciesP_ = fileService->make<TH2D>(
+      "v0SpeciesP",
+      ";Track p [GeV];Species hypothesis",
+      200, 0.0, 20.0,
+      4, 0.5, 4.5);
+
+  v0SpeciesEta_ = fileService->make<TH2D>(
+      "v0SpeciesEta",
+      ";Track #eta;Species hypothesis",
+      120, -3.0, 3.0,
+      4, 0.5, 4.5);
+
+  const char* speciesNames[] = {
+      "Lambda proton",
+      "anti-Lambda antiproton",
+      "Lambda pion",
+      "Kshort pion"
+  };
+
+  for (int i = 0; i < 4; ++i) {
+    v0SpeciesPt_->GetYaxis()->SetBinLabel(i + 1, speciesNames[i]);
+    v0SpeciesP_->GetYaxis()->SetBinLabel(i + 1, speciesNames[i]);
+    v0SpeciesEta_->GetYaxis()->SetBinLabel(i + 1, speciesNames[i]);
+  }
+
   eventCount_ = fileService->make<TH1D>("eventCount", ";;events", 1, 0.0, 1.0);
   eventCutflow_ = fileService->make<TH1D>("eventCutflow", ";event selection;events", 4, 0.5, 4.5);
   eventCutflow_->GetXaxis()->SetBinLabel(1, "All events");
@@ -300,6 +596,26 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
   trackCutflow_->GetXaxis()->SetBinLabel(11, requirePrimaryVertex_ ? "leading-PV dz" : "PV dz bypassed");
   trackCutflow_->GetXaxis()->SetBinLabel(12, "isolation");
   trackCutflow_->GetXaxis()->SetBinLabel(13, "Selected tracks");
+
+
+  v0TrackSelectionCutflow_ = fileService->make<TH1D>(
+      "v0TrackSelectionCutflow", ";V0 daughter track selection;tracks",
+      13, 0.5, 13.5);
+
+  for (int bin = 1; bin <= 13; ++bin) {
+    v0TrackSelectionCutflow_->GetXaxis()->SetBinLabel(
+        bin, trackCutflow_->GetXaxis()->GetBinLabel(bin));
+  }
+
+
+  v0WithoutPVCutsCutflow_ = fileService->make<TH1D>(
+      "v0WithoutPVCutsCutflow",
+      ";V0 selection without PV impact-parameter cuts;tracks",
+      4, 0.5, 4.5);
+  v0WithoutPVCutsCutflow_->GetXaxis()->SetBinLabel(1, "Passed track quality and kinematics");
+  v0WithoutPVCutsCutflow_->GetXaxis()->SetBinLabel(2, "Passed tracker layers");
+  v0WithoutPVCutsCutflow_->GetXaxis()->SetBinLabel(3, "Passed pixel layers");
+  v0WithoutPVCutsCutflow_->GetXaxis()->SetBinLabel(4, "Passed isolation");
 
   numberOfVertices_ =
       fileService->make<TH1D>("numberOfVertices", ";number of primary vertices;events", 100, 0.0, 100.0);
@@ -370,6 +686,224 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
   nonMuonTrackPVarBins_ = fileService->make<TH1D>(
       "nonMuonTrackPVarBins", ";selected-track p [GeV];non-muon tracks", nTrkPBins, trkPBins);
 
+  pfCandidateMatchMultiplicity_ =
+      fileService->make<TH1D>("pfCandidateMatchMultiplicity",
+                              ";number of exact PF-candidate matches;selected tracks",
+                              5, -0.5, 4.5);
+
+  pfCandidateParticleId_ =
+      fileService->make<TH1D>("pfCandidateParticleId",
+                              ";PF-candidate particle type;uniquely matched selected tracks",
+                              8, -0.5, 7.5);
+  pfCandidateParticleId_->GetXaxis()->SetBinLabel(1, "X");
+  pfCandidateParticleId_->GetXaxis()->SetBinLabel(2, "h");
+  pfCandidateParticleId_->GetXaxis()->SetBinLabel(3, "e");
+  pfCandidateParticleId_->GetXaxis()->SetBinLabel(4, "mu");
+  pfCandidateParticleId_->GetXaxis()->SetBinLabel(5, "gamma");
+  pfCandidateParticleId_->GetXaxis()->SetBinLabel(6, "h0");
+  pfCandidateParticleId_->GetXaxis()->SetBinLabel(7, "h_HF");
+  pfCandidateParticleId_->GetXaxis()->SetBinLabel(8, "egamma_HF");
+
+  pfCandidateResponseVsParticleId_ =
+      fileService->make<TH2D>("pfCandidateResponseVsParticleId",
+                              ";PF-candidate particle type;PF-candidate ECAL+HCAL energy / p",
+                              8, -0.5, 7.5, 200, 0.0, 5.0);
+  pfCandidateResponseVsParticleId_->GetXaxis()->SetBinLabel(1, "X");
+  pfCandidateResponseVsParticleId_->GetXaxis()->SetBinLabel(2, "h");
+  pfCandidateResponseVsParticleId_->GetXaxis()->SetBinLabel(3, "e");
+  pfCandidateResponseVsParticleId_->GetXaxis()->SetBinLabel(4, "mu");
+  pfCandidateResponseVsParticleId_->GetXaxis()->SetBinLabel(5, "gamma");
+  pfCandidateResponseVsParticleId_->GetXaxis()->SetBinLabel(6, "h0");
+  pfCandidateResponseVsParticleId_->GetXaxis()->SetBinLabel(7, "h_HF");
+  pfCandidateResponseVsParticleId_->GetXaxis()->SetBinLabel(8, "egamma_HF");
+
+  pfCandidateECALPlusHCALEnergy_ =
+      fileService->make<TH1D>("pfCandidateECALPlusHCALEnergy",
+                              ";PF-candidate ECAL+HCAL energy [GeV];matched selected tracks",
+                              200, 0.0, 200.0);
+
+  pfCandidateECALPlusHCALResponse_ =
+      fileService->make<TH1D>("pfCandidateECALPlusHCALResponse",
+                              ";PF-candidate ECAL+HCAL energy / p;matched selected tracks",
+                              200, 0.0, 5.0);
+
+  pfCandidateECALPlusHCALResponseVsPVarBins_ =
+      fileService->make<TH2D>("pfCandidateECALPlusHCALResponseVsPVarBins",
+                              ";selected-track p [GeV];PF-candidate ECAL+HCAL energy / p",
+                              nTrkPBins, trkPBins, 200, 0.0, 5.0);
+
+  pfCandidateMatchEfficiencyVsPVarBins_ =
+      fileService->make<TProfile>("pfCandidateMatchEfficiencyVsPVarBins",
+                                  ";selected-track p [GeV];exact PF-candidate match efficiency",
+                                  nTrkPBins, trkPBins);
+
+  meanPFCandidateECALPlusHCALResponseVsPVarBins_ =
+      fileService->make<TProfile>("meanPFCandidateECALPlusHCALResponseVsPVarBins",
+                                  ";selected-track p [GeV];mean PF-candidate ECAL+HCAL energy / p",
+                                  nTrkPBins, trkPBins);
+
+  meanPFCandidateECALResponseVsPVarBins_ =
+      fileService->make<TProfile>("meanPFCandidateECALResponseVsPVarBins",
+                                  ";selected-track p [GeV];mean PF-candidate ECAL energy / p",
+                                  nTrkPBins, trkPBins);
+
+  meanPFCandidateHCALResponseVsPVarBins_ =
+      fileService->make<TProfile>("meanPFCandidateHCALResponseVsPVarBins",
+                                  ";selected-track p [GeV];mean PF-candidate HCAL energy / p",
+                                  nTrkPBins, trkPBins);
+
+  pfCandidateToLinkedEnergyRatio_ =
+      fileService->make<TH1D>(
+          "pfCandidateToLinkedEnergyRatio",
+          ";PF-candidate (ECAL+HCAL) / linked-cluster (ECAL+HCAL);selected tracks",
+          200, 0.0, 5.0);
+
+  meanPFCandidateToLinkedEnergyRatioVsPVarBins_ =
+      fileService->make<TProfile>(
+          "meanPFCandidateToLinkedEnergyRatioVsPVarBins",
+          ";selected-track p [GeV];<PF-candidate (ECAL+HCAL) / linked-cluster (ECAL+HCAL)>",
+          nTrkPBins, trkPBins);
+
+  meanSameTrackPFCandidateResponseVsPVarBins_ =
+      fileService->make<TProfile>(
+          "meanSameTrackPFCandidateResponseVsPVarBins",
+          ";selected-track p [GeV];mean PF-candidate (ECAL+HCAL) / p",
+          nTrkPBins, trkPBins);
+
+  meanSameTrackLinkedResponseVsPVarBins_ =
+      fileService->make<TProfile>(
+          "meanSameTrackLinkedResponseVsPVarBins",
+          ";selected-track p [GeV];mean linked-cluster (ECAL+HCAL) / p",
+          nTrkPBins, trkPBins);
+
+  meanHCALLinkedPFCandidateResponseVsPVarBins_ =
+      fileService->make<TProfile>(
+          "meanHCALLinkedPFCandidateResponseVsPVarBins",
+          ";selected-track p [GeV];mean PF-candidate (ECAL+HCAL) / p",
+          nTrkPBins, trkPBins);
+
+  meanHCALLinkedRawPFCandidateResponseVsPVarBins_ =
+      fileService->make<TProfile>(
+          "meanHCALLinkedRawPFCandidateResponseVsPVarBins",
+          ";selected-track p [GeV];mean raw PF-candidate (ECAL+HCAL) / p",
+          nTrkPBins, trkPBins);
+
+  meanDeltaResponseSharedHCALVsP_ =
+      fileService->make<TProfile>(
+          "meanDeltaResponseSharedHCALVsP",
+          ";selected-track p [GeV];mean PF - linked calibrated response",
+          nTrkPBins, trkPBins);
+
+  meanDeltaResponseNonSharedHCALVsP_ =
+      fileService->make<TProfile>(
+          "meanDeltaResponseNonSharedHCALVsP",
+          ";selected-track p [GeV];mean PF - linked calibrated response",
+          nTrkPBins, trkPBins);
+
+  meanDeltaResponseMultiTrackBlockVsP_ =
+      fileService->make<TProfile>(
+          "meanDeltaResponseMultiTrackBlockVsP",
+          ";selected-track p [GeV];mean PF - linked calibrated response",
+          nTrkPBins, trkPBins);
+
+  meanDeltaResponseMultiHCALBlockVsP_ =
+      fileService->make<TProfile>(
+          "meanDeltaResponseMultiHCALBlockVsP",
+          ";selected-track p [GeV];mean PF - linked calibrated response",
+          nTrkPBins, trkPBins);
+
+  meanDeltaResponseMultiECALBlockVsP_ =
+      fileService->make<TProfile>(
+          "meanDeltaResponseMultiECALBlockVsP",
+          ";selected-track p [GeV];mean PF - linked calibrated response",
+          nTrkPBins, trkPBins);
+
+  meanDeltaResponseSimpleBlockVsP_ =
+      fileService->make<TProfile>(
+          "meanDeltaResponseSimpleBlockVsP",
+          ";selected-track p [GeV];mean PF - linked calibrated response",
+          nTrkPBins, trkPBins);
+
+  meanDeltaResponseComplexBlockVsP_ =
+      fileService->make<TProfile>(
+          "meanDeltaResponseComplexBlockVsP",
+          ";selected-track p [GeV];mean PF - linked calibrated response",
+          nTrkPBins, trkPBins);
+
+  meanPFResponseSimpleBlockVsP_ =
+      fileService->make<TProfile>(
+          "meanPFResponseSimpleBlockVsP",
+          ";selected-track p [GeV];mean (ECAL+HCAL)/p",
+          nTrkPBins, trkPBins);
+
+  meanLinkedResponseSimpleBlockVsP_ =
+      fileService->make<TProfile>(
+          "meanLinkedResponseSimpleBlockVsP",
+          ";selected-track p [GeV];mean (ECAL+HCAL)/p",
+          nTrkPBins, trkPBins);
+
+  meanPFResponseComplexBlockVsP_ =
+      fileService->make<TProfile>(
+          "meanPFResponseComplexBlockVsP",
+          ";selected-track p [GeV];mean (ECAL+HCAL)/p",
+          nTrkPBins, trkPBins);
+
+  meanLinkedResponseComplexBlockVsP_ =
+      fileService->make<TProfile>(
+          "meanLinkedResponseComplexBlockVsP",
+          ";selected-track p [GeV];mean (ECAL+HCAL)/p",
+          nTrkPBins, trkPBins);
+
+  hcalLinkedPFCandidateResponseVsPVarBins_ =
+      fileService->make<TH2D>(
+          "hcalLinkedPFCandidateResponseVsPVarBins",
+          ";selected-track p [GeV];PF-candidate (ECAL+HCAL) / p",
+          nTrkPBins, trkPBins,
+          200, 0.0, 5.0);
+
+  hcalLinkedRawPFCandidateResponseVsPVarBins_ =
+      fileService->make<TH2D>(
+          "hcalLinkedRawPFCandidateResponseVsPVarBins",
+          ";selected-track p [GeV];raw PF-candidate (ECAL+HCAL) / p",
+          nTrkPBins, trkPBins,
+          200, 0.0, 5.0);
+
+  hcalLinkedPFCandidateMatchEfficiencyVsPVarBins_ =
+      fileService->make<TProfile>(
+          "hcalLinkedPFCandidateMatchEfficiencyVsPVarBins",
+          ";selected-track p [GeV];unique PF-candidate match efficiency",
+          nTrkPBins, trkPBins);
+
+  hcalLinkedChargedHadronEfficiencyVsPVarBins_ =
+      fileService->make<TProfile>(
+          "hcalLinkedChargedHadronEfficiencyVsPVarBins",
+          ";selected-track p [GeV];charged-hadron PF-candidate efficiency",
+          nTrkPBins, trkPBins);
+
+  pfCandidateECALVsLinkedECAL_ =
+      fileService->make<TH2D>(
+          "pfCandidateECALVsLinkedECAL",
+          ";linked ECAL energy [GeV];PF-candidate ECAL energy [GeV]",
+          200, 0.0, 20.0, 200, 0.0, 20.0);
+
+  pfCandidateHCALVsLinkedHCAL_ =
+      fileService->make<TH2D>(
+          "pfCandidateHCALVsLinkedHCAL",
+          ";linked HCAL energy [GeV];PF-candidate HCAL energy [GeV]",
+          200, 0.0, 20.0, 200, 0.0, 20.0);
+
+  rawPFCandidateECALVsLinkedECAL_ =
+      fileService->make<TH2D>(
+          "rawPFCandidateECALVsLinkedECAL",
+          ";linked ECAL energy [GeV];raw PF-candidate ECAL energy [GeV]",
+          200, 0.0, 20.0, 200, 0.0, 20.0);
+
+  rawPFCandidateHCALVsLinkedHCAL_ =
+      fileService->make<TH2D>(
+          "rawPFCandidateHCALVsLinkedHCAL",
+          ";linked HCAL energy [GeV];raw PF-candidate HCAL energy [GeV]",
+          200, 0.0, 20.0, 200, 0.0, 20.0);
+
   pfLinkingCutflow_ = fileService->make<TH1D>("pfLinkingCutflow", ";PF linking;selected tracks", 7, 0.5, 7.5);
   pfLinkingCutflow_->GetXaxis()->SetBinLabel(1, "Selected tracks");
   pfLinkingCutflow_->GetXaxis()->SetBinLabel(2, "Found PF block");
@@ -381,6 +915,72 @@ SPRLowPUDataAnalyzer::SPRLowPUDataAnalyzer(edm::ParameterSet const& config)
 
   pfBlockMatchMultiplicity_ = fileService->make<TH1D>(
       "pfBlockMatchMultiplicity", ";number of PF blocks containing selected track;selected tracks", 6, -0.5, 5.5);
+  neutralHadronMultiplicityLinkedHCAL_ =
+      fileService->make<TH1D>(
+          "neutralHadronMultiplicityLinkedHCAL",
+          ";neutral hadrons with HCAL association;charged hadrons",
+          20, -0.5, 19.5);
+
+  neutralHadronEnergyFractionLinkedHCAL_ =
+      fileService->make<TH1D>(
+          "neutralHadronEnergyFractionLinkedHCAL",
+          ";neutral energy fraction (HCAL association);charged hadrons",
+          50, 0.0, 1.0);
+
+  neutralHadronMultiplicitySameHCAL_ =
+      fileService->make<TH1D>(
+          "neutralHadronMultiplicitySameHCAL",
+          ";neutral hadrons sharing HCAL element;charged hadrons",
+          20, -0.5, 19.5);
+
+  neutralHadronEnergyFractionSameHCAL_ =
+      fileService->make<TH1D>(
+          "neutralHadronEnergyFractionSameHCAL",
+          ";neutral energy fraction (shared HCAL element);charged hadrons",
+          50, 0.0, 1.0);
+
+  neutralHadronMultiplicitySameBlock_ =
+      fileService->make<TH1D>(
+          "neutralHadronMultiplicitySameBlock",
+          ";neutral hadrons in same PFBlock;charged hadron candidates",
+          20, -0.5, 19.5);
+
+  neutralHadronEnergyFractionSameBlock_ =
+      fileService->make<TH1D>(
+          "neutralHadronEnergyFractionSameBlock",
+          ";neutral hadron energy fraction;charged hadron candidates",
+          50, 0.0, 1.0);
+
+  neutralSameBlockFractionVsP_ =
+      fileService->make<TProfile>(
+          "neutralSameBlockFractionVsP",
+          ";track p [GeV];fraction with neutral hadron in same PFBlock",
+          nTrkPBins, trkPBins);
+
+  neutralSameHCALFractionVsP_ =
+      fileService->make<TProfile>(
+          "neutralSameHCALFractionVsP",
+          ";track p [GeV];fraction sharing HCAL element",
+          nTrkPBins, trkPBins);
+
+  neutralLinkedHCALFractionVsP_ =
+      fileService->make<TProfile>(
+          "neutralLinkedHCALFractionVsP",
+          ";track p [GeV];fraction with linked HCAL association",
+          nTrkPBins, trkPBins);
+
+  meanNeutralHadronFractionVsP_ =
+      fileService->make<TProfile>(
+          "meanNeutralHadronFractionVsP",
+          ";track p [GeV];mean neutral hadron energy fraction",
+          nTrkPBins, trkPBins);
+
+  meanNeutralHadronMultiplicityVsP_ =
+      fileService->make<TProfile>(
+          "meanNeutralHadronMultiplicityVsP",
+          ";track p [GeV];mean neutral hadron multiplicity",
+          nTrkPBins, trkPBins);
+
   matchedPFBlockNumberOfElements_ =
       fileService->make<TH1D>("matchedPFBlockNumberOfElements",
                               ";number of elements in matched PF block;uniquely matched selected tracks",
@@ -1024,7 +1624,72 @@ void SPRLowPUDataAnalyzer::analyze(edm::Event const& event, edm::EventSetup cons
   auto const tracksHandle = event.getHandle(tracksToken_);
   auto const& tracks = *tracksHandle;
   auto const& pfBlocks = event.get(pfBlocksToken_);
+  auto const& pfCandidates = event.get(pfCandidatesToken_);
   auto const& muons = event.get(muonsToken_);
+
+  std::set<reco::TrackRef> v0DaughterTracks;
+  std::map<reco::TrackRef, std::set<int>> v0TrackSpecies;
+
+  if (doV0Tagging_) {
+    auto collectDaughters = [&](auto const& candidates, double category) {
+      for (auto const& candidate : candidates) {
+        v0CandidateCounts_->Fill(category);
+
+        if (candidate.numberOfDaughters() != 2)
+          continue;
+
+        for (unsigned int i = 0; i < 2; ++i) {
+          auto const* daughter =
+              dynamic_cast<reco::RecoChargedCandidate const*>(
+                  candidate.daughter(i));
+
+          if (!daughter || daughter->track().isNull())
+            continue;
+
+          v0DaughterCutflow_->Fill(1.0);
+          v0DaughterTracks.insert(daughter->track());
+
+          int species = 0;
+
+          // Daughter ordering follows CMSSW V0Fitter:
+          // Lambda:      proton, pion-
+          // anti-Lambda: anti-proton, pion+
+          // Kshort:      pion+, pion-
+          if (candidate.pdgId() == 3122) {
+            species = (i == 0) ? 1 : 3;
+          } else if (candidate.pdgId() == -3122) {
+            species = (i == 0) ? 2 : 3;
+          } else if (candidate.pdgId() == 310) {
+            species = 4;
+          }
+
+          if (species > 0)
+            v0TrackSpecies[daughter->track()].insert(species);
+        }
+      }
+    };
+
+    auto const lambdas = event.getHandle(lambdaToken_);
+    auto const kshorts = event.getHandle(kshortToken_);
+
+    if (lambdas.isValid())
+      collectDaughters(*lambdas, 1.0);
+
+    if (kshorts.isValid())
+      collectDaughters(*kshorts, 2.0);
+  }
+
+  std::set<reco::TrackRef> matchedV0Tracks;
+
+  if (doV0Tagging_) {
+    for (std::size_t i = 0; i < tracks.size(); ++i) {
+      reco::TrackRef const ref(tracksHandle, i);
+      if (v0DaughterTracks.count(ref)) {
+        matchedV0Tracks.insert(ref);
+        v0DaughterCutflow_->Fill(2.0);
+      }
+    }
+  }
 
   eventCount_->Fill(0.5);
   numberOfTracks_->Fill(tracks.size());
@@ -1071,50 +1736,286 @@ void SPRLowPUDataAnalyzer::analyze(edm::Event const& event, edm::EventSetup cons
   unsigned int numberOfSelectedTracks = 0;
   for (std::size_t trackIndex = 0; trackIndex < tracks.size(); ++trackIndex) {
     reco::Track const& track = tracks[trackIndex];
+    reco::TrackRef const v0TrackRef(tracksHandle, trackIndex);
+    bool const isV0Daughter =
+        doV0Tagging_ && matchedV0Tracks.count(v0TrackRef) != 0;
+
+    if (isV0Daughter) {
+      auto const speciesForCutflow = v0TrackSpecies.find(v0TrackRef);
+
+      if (speciesForCutflow != v0TrackSpecies.end()) {
+        auto const fillSpeciesStep = [&](int step) {
+          for (int species : speciesForCutflow->second) {
+            v0SpeciesCutflow_->Fill(step, species);
+          }
+        };
+
+        fillSpeciesStep(1);
+
+        if (track.quality(trackQuality_)) {
+          fillSpeciesStep(2);
+
+          for (int species : speciesForCutflow->second) {
+            v0SpeciesPt_->Fill(track.pt(), species);
+            v0SpeciesP_->Fill(track.p(), species);
+            v0SpeciesEta_->Fill(track.eta(), species);
+          }
+
+          if (minV0TrackPt_ < 0.0 || track.pt() >= minV0TrackPt_) {
+            fillSpeciesStep(3);
+
+            if (track.p() >= minV0TrackP_) {
+              fillSpeciesStep(4);
+
+              if (std::abs(track.eta()) <= maxTrackAbsEta_) {
+                fillSpeciesStep(5);
+
+                if (track.normalizedChi2() <= maxTrackNormalizedChi2_) {
+                  fillSpeciesStep(6);
+
+                  if (track.qoverp() != 0.0 &&
+                      track.qoverpError() / std::abs(track.qoverp()) <=
+                          maxTrackRelativePError_) {
+                    fillSpeciesStep(7);
+
+                    if (track.hitPattern().trackerLayersWithMeasurement() >=
+                        static_cast<int>(minTrackerLayers_)) {
+                      fillSpeciesStep(8);
+
+                      if (track.hitPattern().pixelLayersWithMeasurement() >=
+                          static_cast<int>(minPixelLayers_)) {
+                        fillSpeciesStep(9);
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+
+      bool const passesV0TrackQuality =
+          track.quality(trackQuality_) &&
+          (minV0TrackPt_ < 0.0 || track.pt() >= minV0TrackPt_) &&
+          track.p() >= minV0TrackP_ &&
+          std::abs(track.eta()) <= maxTrackAbsEta_ &&
+          track.normalizedChi2() <= maxTrackNormalizedChi2_ &&
+          track.qoverp() != 0.0 &&
+          track.qoverpError() / std::abs(track.qoverp()) <=
+              maxTrackRelativePError_ &&
+          track.hitPattern().trackerLayersWithMeasurement() >=
+              static_cast<int>(minTrackerLayers_) &&
+          track.hitPattern().pixelLayersWithMeasurement() >=
+              static_cast<int>(minPixelLayers_);
+
+      if (passesV0TrackQuality) {
+        auto const speciesIt = v0TrackSpecies.find(v0TrackRef);
+
+        if (speciesIt != v0TrackSpecies.end()) {
+          v0SpeciesMultiplicity_->Fill(speciesIt->second.size());
+
+          int speciesMask = 0;
+          for (int species : speciesIt->second) {
+            speciesMask |= (1 << (species - 1));
+          }
+          v0SpeciesCombination_->Fill(speciesMask);
+
+          unsigned int matchCount = 0;
+          reco::PFCandidate const* matched = nullptr;
+
+          for (auto const& candidate : pfCandidates) {
+            if (candidate.trackRef().isNonnull() &&
+                candidate.trackRef() == v0TrackRef) {
+              ++matchCount;
+              matched = &candidate;
+            }
+          }
+
+          for (int species : speciesIt->second) {
+            v0SpeciesCounts_->Fill(species);
+
+            if (matchCount == 1 && matched != nullptr &&
+                matched->particleId() == reco::PFCandidate::h) {
+              v0SpeciesPFMatches_->Fill(species);
+              v0SpeciesCutflow_->Fill(10, species);
+              double const response =
+                  (matched->ecalEnergy() + matched->hcalEnergy()) /
+                  track.p();
+
+              v0SpeciesPFResponse_->Fill(species, response);
+              v0SpeciesResponseVsP_[species - 1]->Fill(
+                  track.p(), response);
+
+              if (response > 0.0) {
+                v0SpeciesPositiveResponseVsP_[species - 1]->Fill(
+                    track.p(), response);
+              }
+
+              v0PFBlockLinkStatus_->Fill(species, 1);
+
+              unsigned int blockMatches = 0;
+              reco::PFBlock const* matchedBlock = nullptr;
+              unsigned int trackElementIndex = 0;
+
+              for (auto const& block : pfBlocks) {
+                auto const& elements = block.elements();
+                for (unsigned int j = 0; j < elements.size(); ++j) {
+                  if (elements[j].type() == reco::PFBlockElement::TRACK &&
+                      elements[j].trackRef() == v0TrackRef) {
+                    ++blockMatches;
+                    matchedBlock = &block;
+                    trackElementIndex = j;
+                    break;
+                  }
+                }
+              }
+
+              if (blockMatches == 0) {
+                v0PFBlockLinkStatus_->Fill(species, 2);
+              } else if (blockMatches > 1) {
+                v0PFBlockLinkStatus_->Fill(species, 4);
+              } else {
+                v0PFBlockLinkStatus_->Fill(species, 3);
+
+                auto const& elements = matchedBlock->elements();
+
+                auto closestEnergy = [&](reco::PFBlockElement::Type type,
+                                         bool& found) {
+                  std::multimap<double, unsigned int> links;
+                  matchedBlock->associatedElements(
+                      trackElementIndex, matchedBlock->linkData(),
+                      links, type, reco::PFBlock::LINKTEST_ALL);
+
+                  for (auto const& link : links) {
+                    auto const& cluster = elements[link.second].clusterRef();
+                    if (cluster.isNonnull() && cluster.isAvailable()) {
+                      found = true;
+                      return static_cast<double>(cluster->energy());
+                    }
+                  }
+                  return 0.0;
+                };
+
+                bool hasECAL = false;
+                bool hasHCAL = false;
+
+                double const ecal = closestEnergy(
+                    reco::PFBlockElement::ECAL, hasECAL);
+                double const hcal = closestEnergy(
+                    reco::PFBlockElement::HCAL, hasHCAL);
+
+                if (hasECAL)
+                  v0PFBlockLinkStatus_->Fill(species, 5);
+                if (hasHCAL)
+                  v0PFBlockLinkStatus_->Fill(species, 6);
+
+                double const linkedResponse =
+                    (ecal + hcal) / track.p();
+
+                v0PFVsLinkedResponse_->Fill(
+                    response, linkedResponse);
+
+                bool const hasCluster = hasECAL || hasHCAL;
+
+                int const responseCategory =
+                    response == 0.0 ? 0 :
+                    response < 0.05 ? 1 : 2;
+
+                v0SpeciesResponseLinkCategory_->Fill(
+                    species,
+                    1 + responseCategory + (hasCluster ? 3 : 0));
+
+                if (hasECAL || hasHCAL) {
+                  v0PFVsLinkedResponseAnyCluster_->Fill(
+                      response, linkedResponse);
+                } else {
+                  v0PFVsLinkedResponseNoCluster_->Fill(
+                      response, linkedResponse);
+                }
+
+                if (hasHCAL) {
+                  v0PFVsLinkedResponseHCAL_->Fill(
+                      response, linkedResponse);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
     trackCutflow_->Fill(1.0);
+    if (isV0Daughter)
+      v0TrackSelectionCutflow_->Fill(1.0);
 
     if (!track.quality(trackQuality_)) {
       continue;
     }
     trackCutflow_->Fill(2.0);
+    if (isV0Daughter)
+      v0TrackSelectionCutflow_->Fill(2.0);
 
     if (minTrackPt_ >= 0.0 && track.pt() < minTrackPt_) {
       continue;
     }
     trackCutflow_->Fill(3.0);
+    if (isV0Daughter)
+      v0TrackSelectionCutflow_->Fill(3.0);
 
     if (track.p() < minTrackP_) {
       continue;
     }
     trackCutflow_->Fill(4.0);
+    if (isV0Daughter)
+      v0TrackSelectionCutflow_->Fill(4.0);
 
     if (std::abs(track.eta()) > maxTrackAbsEta_) {
       continue;
     }
     trackCutflow_->Fill(5.0);
+    if (isV0Daughter)
+      v0TrackSelectionCutflow_->Fill(5.0);
 
     if (track.normalizedChi2() > maxTrackNormalizedChi2_) {
       continue;
     }
     trackCutflow_->Fill(6.0);
+    if (isV0Daughter)
+      v0TrackSelectionCutflow_->Fill(6.0);
 
     double const relativePError = track.qoverpError() / std::abs(track.qoverp());
     if (relativePError > maxTrackRelativePError_) {
       continue;
     }
     trackCutflow_->Fill(7.0);
+    if (isV0Daughter)
+      v0TrackSelectionCutflow_->Fill(7.0);
 
     unsigned int const trackerLayers = track.hitPattern().trackerLayersWithMeasurement();
     if (trackerLayers < minTrackerLayers_) {
       continue;
     }
     trackCutflow_->Fill(8.0);
+    if (isV0Daughter)
+      v0TrackSelectionCutflow_->Fill(8.0);
 
     unsigned int const pixelLayers = track.hitPattern().pixelLayersWithMeasurement();
     if (pixelLayers < minPixelLayers_) {
       continue;
     }
     trackCutflow_->Fill(9.0);
+    if (isV0Daughter) {
+      v0TrackSelectionCutflow_->Fill(9.0);
+      v0WithoutPVCutsCutflow_->Fill(1.0);
+      v0WithoutPVCutsCutflow_->Fill(2.0);
+      v0WithoutPVCutsCutflow_->Fill(3.0);
+
+      auto const [v0SamePVIsolation, v0AllVertexIsolation] =
+          chargedIsolation(trackIndex, tracks, leadingVertex);
+      if (v0AllVertexIsolation / track.pt() < maxRelativeIsolation_)
+        v0WithoutPVCutsCutflow_->Fill(4.0);
+    }
 
     double dxy = 0.0;
     if (leadingVertex != nullptr) {
@@ -1124,6 +2025,8 @@ void SPRLowPUDataAnalyzer::analyze(edm::Event const& event, edm::EventSetup cons
       }
     }
     trackCutflow_->Fill(10.0);
+    if (isV0Daughter)
+      v0TrackSelectionCutflow_->Fill(10.0);
 
     double dz = 0.0;
     if (leadingVertex != nullptr) {
@@ -1133,6 +2036,8 @@ void SPRLowPUDataAnalyzer::analyze(edm::Event const& event, edm::EventSetup cons
       }
     }
     trackCutflow_->Fill(11.0);
+    if (isV0Daughter)
+      v0TrackSelectionCutflow_->Fill(11.0);
 
     auto const [samePVIsolation, allVertexIsolation] = chargedIsolation(trackIndex, tracks, leadingVertex);
     double const samePVRelativeIsolation = samePVIsolation / track.pt();
@@ -1141,7 +2046,11 @@ void SPRLowPUDataAnalyzer::analyze(edm::Event const& event, edm::EventSetup cons
       continue;
     }
     trackCutflow_->Fill(12.0);
+    if (isV0Daughter)
+      v0TrackSelectionCutflow_->Fill(12.0);
     trackCutflow_->Fill(13.0);
+    if (isV0Daughter)
+      v0TrackSelectionCutflow_->Fill(13.0);
 
     ++numberOfSelectedTracks;
     selectedTrackP_->Fill(track.p());
@@ -1162,6 +2071,10 @@ void SPRLowPUDataAnalyzer::analyze(edm::Event const& event, edm::EventSetup cons
     selectedTrackAllVertexRelativeIsolation_->Fill(allVertexRelativeIsolation);
 
     reco::TrackRef const trackRef(tracksHandle, trackIndex);
+
+    if (doV0Tagging_ && matchedV0Tracks.count(trackRef))
+      v0DaughterCutflow_->Fill(3.0);
+
     MuonMatchResult const muonMatch = matchMuon(trackRef, muons, leadingVertex);
     muonMatchMultiplicity_->Fill(muonMatch.multiplicity);
     muonIDSummary_->Fill(1.0);
@@ -1210,7 +2123,247 @@ void SPRLowPUDataAnalyzer::analyze(edm::Event const& event, edm::EventSetup cons
     muonTagEfficiencyVsPVarBins_->Fill(track.p(), muonMatch.isMuonTagged());
     muonTagEfficiencyVsEta_->Fill(track.eta(), muonMatch.isMuonTagged());
 
-    fillPFLinkingDiagnostics(trackRef, track, pfBlocks, numberOfGoodVertices, muonMatch);
+    unsigned int pfCandidateMatchMultiplicity = 0;
+    reco::PFCandidate const* matchedPFCandidate = nullptr;
+
+    for (auto const& pfCandidate : pfCandidates) {
+      reco::TrackRef const candidateTrackRef = pfCandidate.trackRef();
+
+      if (candidateTrackRef.isNonnull() && candidateTrackRef == trackRef) {
+        ++pfCandidateMatchMultiplicity;
+
+        if (matchedPFCandidate == nullptr) {
+          matchedPFCandidate = &pfCandidate;
+        }
+      }
+    }
+
+    if (pfCandidateMatchMultiplicity == 1 &&
+        matchedPFCandidate != nullptr &&
+        matchedPFCandidate->particleId() == reco::PFCandidate::h) {
+
+      unsigned int neutralLinkedHCALMultiplicity = 0;
+      double neutralLinkedHCALEnergy = 0.0;
+      unsigned int neutralSameHCALMultiplicity = 0;
+      double neutralSameHCALEnergy = 0.0;
+      unsigned int neutralMultiplicity = 0;
+      double neutralEnergy = 0.0;
+
+      auto const& chargedElements =
+          matchedPFCandidate->elementsInBlocks();
+
+      for (auto const& candidate : pfCandidates) {
+        if (candidate.particleId() != reco::PFCandidate::h0) {
+          continue;
+        }
+
+        bool sameBlock = false;
+
+        for (auto const& chargedElement : chargedElements) {
+          if (chargedElement.first.isNull()) {
+            continue;
+          }
+
+          for (auto const& neutralElement :
+               candidate.elementsInBlocks()) {
+
+            if (neutralElement.first.isNonnull() &&
+                neutralElement.first == chargedElement.first) {
+              sameBlock = true;
+              break;
+            }
+          }
+
+          if (sameBlock) break;
+        }
+
+        bool sameHCALElement = false;
+
+        for (auto const& chargedElement : chargedElements) {
+          if (chargedElement.first.isNull()) continue;
+
+          auto const& block = *chargedElement.first;
+          auto const& elements = block.elements();
+
+          if (chargedElement.second >= elements.size() ||
+              elements[chargedElement.second].type() !=
+                  reco::PFBlockElement::HCAL) {
+            continue;
+          }
+
+          for (auto const& neutralElement :
+               candidate.elementsInBlocks()) {
+            if (neutralElement.first == chargedElement.first &&
+                neutralElement.second == chargedElement.second) {
+              sameHCALElement = true;
+              break;
+            }
+          }
+
+          if (sameHCALElement) break;
+        }
+
+        bool linkedHCAL = false;
+
+        for (auto const& chargedElement : chargedElements) {
+          if (chargedElement.first.isNull()) continue;
+
+          auto const& block = *chargedElement.first;
+          auto const& elements = block.elements();
+
+          if (chargedElement.second >= elements.size()) continue;
+
+          for (auto const& neutralElement :
+               candidate.elementsInBlocks()) {
+
+            if (neutralElement.first != chargedElement.first ||
+                neutralElement.second >= elements.size()) {
+              continue;
+            }
+
+            unsigned int const chargedIndex = chargedElement.second;
+            unsigned int const neutralIndex = neutralElement.second;
+
+            bool const chargedIsHCAL =
+                elements[chargedIndex].type() == reco::PFBlockElement::HCAL;
+
+            bool const neutralIsHCAL =
+                elements[neutralIndex].type() == reco::PFBlockElement::HCAL;
+
+            if (!chargedIsHCAL && !neutralIsHCAL) continue;
+
+            if (chargedIndex == neutralIndex) {
+              linkedHCAL = true;
+            } else {
+              double const distance =
+                  block.dist(chargedIndex, neutralIndex, block.linkData());
+
+              if (distance >= 0.0) {
+                linkedHCAL = true;
+              }
+            }
+
+            if (linkedHCAL) break;
+          }
+
+          if (linkedHCAL) break;
+        }
+
+        if (linkedHCAL) {
+          ++neutralLinkedHCALMultiplicity;
+          neutralLinkedHCALEnergy += candidate.energy();
+        }
+
+        if (sameHCALElement) {
+          ++neutralSameHCALMultiplicity;
+          neutralSameHCALEnergy += candidate.energy();
+        }
+
+        if (sameBlock) {
+          ++neutralMultiplicity;
+          neutralEnergy += candidate.energy();
+        }
+      }
+
+      double const linkedHCALTotalEnergy =
+          matchedPFCandidate->energy() + neutralLinkedHCALEnergy;
+
+      neutralHadronMultiplicityLinkedHCAL_->Fill(
+          neutralLinkedHCALMultiplicity);
+
+      if (linkedHCALTotalEnergy > 0.0) {
+        neutralHadronEnergyFractionLinkedHCAL_->Fill(
+            neutralLinkedHCALEnergy / linkedHCALTotalEnergy);
+      }
+
+      double const sameHCALTotalEnergy =
+          matchedPFCandidate->energy() + neutralSameHCALEnergy;
+
+      neutralHadronMultiplicitySameHCAL_->Fill(
+          neutralSameHCALMultiplicity);
+
+      if (sameHCALTotalEnergy > 0.0) {
+        neutralHadronEnergyFractionSameHCAL_->Fill(
+            neutralSameHCALEnergy / sameHCALTotalEnergy);
+      }
+
+      double const totalEnergy =
+          matchedPFCandidate->energy() + neutralEnergy;
+
+      double const neutralFraction =
+          totalEnergy > 0.0 ? neutralEnergy / totalEnergy : 0.0;
+
+      neutralHadronMultiplicitySameBlock_->Fill(
+          neutralMultiplicity);
+
+      neutralSameBlockFractionVsP_->Fill(
+          track.p(), neutralMultiplicity > 0);
+      neutralSameHCALFractionVsP_->Fill(
+          track.p(), neutralSameHCALMultiplicity > 0);
+      neutralLinkedHCALFractionVsP_->Fill(
+          track.p(), neutralLinkedHCALMultiplicity > 0);
+
+      if (totalEnergy > 0.0) {
+        neutralHadronEnergyFractionSameBlock_->Fill(
+            neutralFraction);
+
+        meanNeutralHadronFractionVsP_->Fill(
+            track.p(), neutralFraction);
+      }
+
+      meanNeutralHadronMultiplicityVsP_->Fill(
+          track.p(), neutralMultiplicity);
+    }
+
+    pfCandidateMatchMultiplicity_->Fill(pfCandidateMatchMultiplicity);
+    pfCandidateMatchEfficiencyVsPVarBins_->Fill(
+        track.p(), pfCandidateMatchMultiplicity == 1);
+
+    if (pfCandidateMatchMultiplicity == 1 && matchedPFCandidate != nullptr) {
+      pfCandidateParticleId_->Fill(matchedPFCandidate->particleId());
+
+      double const pfCandidateECALEnergy =
+          matchedPFCandidate->ecalEnergy();
+      double const pfCandidateHCALEnergy =
+          matchedPFCandidate->hcalEnergy();
+
+      double const pfCandidateECALPlusHCALEnergy =
+          pfCandidateECALEnergy + pfCandidateHCALEnergy;
+
+      double const pfCandidateECALResponse =
+          pfCandidateECALEnergy / track.p();
+      double const pfCandidateHCALResponse =
+          pfCandidateHCALEnergy / track.p();
+      double const pfCandidateECALPlusHCALResponse =
+          pfCandidateECALPlusHCALEnergy / track.p();
+
+      pfCandidateResponseVsParticleId_->Fill(
+          matchedPFCandidate->particleId(), pfCandidateECALPlusHCALResponse);
+
+      pfCandidateECALPlusHCALEnergy_->Fill(
+          pfCandidateECALPlusHCALEnergy);
+
+      pfCandidateECALPlusHCALResponse_->Fill(
+          pfCandidateECALPlusHCALResponse);
+
+      pfCandidateECALPlusHCALResponseVsPVarBins_->Fill(
+          track.p(), pfCandidateECALPlusHCALResponse);
+
+      meanPFCandidateECALPlusHCALResponseVsPVarBins_->Fill(
+          track.p(), pfCandidateECALPlusHCALResponse);
+      meanPFCandidateECALResponseVsPVarBins_->Fill(
+          track.p(), pfCandidateECALResponse);
+      meanPFCandidateHCALResponseVsPVarBins_->Fill(
+          track.p(), pfCandidateHCALResponse);
+    }
+
+    fillPFLinkingDiagnostics(
+        trackRef,
+        track,
+        pfBlocks,
+        numberOfGoodVertices,
+        muonMatch,
+        pfCandidateMatchMultiplicity == 1 ? matchedPFCandidate : nullptr);
   }
 
   numberOfSelectedTracks_->Fill(numberOfSelectedTracks);
@@ -1288,7 +2441,8 @@ void SPRLowPUDataAnalyzer::fillPFLinkingDiagnostics(reco::TrackRef const& trackR
                                                     reco::Track const& track,
                                                     reco::PFBlockCollection const& pfBlocks,
                                                     unsigned int numberOfGoodVertices,
-                                                    MuonMatchResult const& muonMatch) {
+                                                    MuonMatchResult const& muonMatch,
+                                                    reco::PFCandidate const* matchedPFCandidate) {
   struct PFBlockMatch {
     reco::PFBlock const* block;
     unsigned int trackElementIndex;
@@ -1404,6 +2558,40 @@ void SPRLowPUDataAnalyzer::fillPFLinkingDiagnostics(reco::TrackRef const& trackR
     ClosestLinkedCluster const closestLinkedHCAL = closestLinkedCluster(reco::PFBlockElement::HCAL);
     ClosestLinkedCluster const closestLinkedHO = closestLinkedCluster(reco::PFBlockElement::HO);
 
+    bool sharedClosestHCAL = false;
+
+    if (closestLinkedHCAL.cluster.isNonnull() &&
+        numberOfTrackElements >= 2) {
+      for (unsigned int otherIndex = 0;
+           otherIndex < elements.size(); ++otherIndex) {
+        if (otherIndex == trackElementIndex ||
+            elements[otherIndex].type() !=
+                reco::PFBlockElement::TRACK) {
+          continue;
+        }
+
+        std::multimap<double, unsigned int> otherHCALLinks;
+        block.associatedElements(
+            otherIndex, block.linkData(), otherHCALLinks,
+            reco::PFBlockElement::HCAL,
+            reco::PFBlock::LINKTEST_ALL);
+
+        for (auto const& link : otherHCALLinks) {
+          auto const& otherCluster =
+              elements[link.second].clusterRef();
+
+          if (otherCluster.isNonnull() &&
+              otherCluster.isAvailable() &&
+              otherCluster == closestLinkedHCAL.cluster) {
+            sharedClosestHCAL = true;
+            break;
+          }
+        }
+
+        if (sharedClosestHCAL) break;
+      }
+    }
+
     linkedECALClusterMultiplicity_->Fill(closestLinkedECAL.validLinkMultiplicity);
     linkedHCALClusterMultiplicity_->Fill(closestLinkedHCAL.validLinkMultiplicity);
     linkedHOClusterMultiplicity_->Fill(closestLinkedHO.validLinkMultiplicity);
@@ -1427,6 +2615,41 @@ void SPRLowPUDataAnalyzer::fillPFLinkingDiagnostics(reco::TrackRef const& trackR
     double const linkedHOEnergy = hasLinkedHO ? closestLinkedHO.cluster->energy() : 0.0;
 
     double const linkedECALPlusHCALEnergy = linkedECALEnergy + linkedHCALEnergy;
+
+    if (matchedPFCandidate != nullptr && linkedECALPlusHCALEnergy > 0.0) {
+      double const pfCandidateECALEnergy = matchedPFCandidate->ecalEnergy();
+      double const pfCandidateHCALEnergy = matchedPFCandidate->hcalEnergy();
+      double const pfCandidateECALPlusHCALEnergy =
+          pfCandidateECALEnergy + pfCandidateHCALEnergy;
+
+      pfCandidateECALVsLinkedECAL_->Fill(
+          linkedECALEnergy, pfCandidateECALEnergy);
+      pfCandidateHCALVsLinkedHCAL_->Fill(
+          linkedHCALEnergy, pfCandidateHCALEnergy);
+
+      rawPFCandidateECALVsLinkedECAL_->Fill(
+          linkedECALEnergy, matchedPFCandidate->rawEcalEnergy());
+      rawPFCandidateHCALVsLinkedHCAL_->Fill(
+          linkedHCALEnergy, matchedPFCandidate->rawHcalEnergy());
+
+      double const pfCandidateToLinkedEnergyRatio =
+          pfCandidateECALPlusHCALEnergy / linkedECALPlusHCALEnergy;
+
+      pfCandidateToLinkedEnergyRatio_->Fill(pfCandidateToLinkedEnergyRatio);
+      meanPFCandidateToLinkedEnergyRatioVsPVarBins_->Fill(
+          track.p(), pfCandidateToLinkedEnergyRatio);
+
+      double const sameTrackPFCandidateResponse =
+          pfCandidateECALPlusHCALEnergy / track.p();
+      double const sameTrackLinkedResponse =
+          linkedECALPlusHCALEnergy / track.p();
+
+      meanSameTrackPFCandidateResponseVsPVarBins_->Fill(
+          track.p(), sameTrackPFCandidateResponse);
+      meanSameTrackLinkedResponseVsPVarBins_->Fill(
+          track.p(), sameTrackLinkedResponse);
+    }
+
     double const linkedECALResponse = linkedECALEnergy / track.p();
     double const linkedHCALResponse = linkedHCALEnergy / track.p();
     double const linkedECALPlusHCALResponse = linkedECALPlusHCALEnergy / track.p();
@@ -1461,6 +2684,38 @@ void SPRLowPUDataAnalyzer::fillPFLinkingDiagnostics(reco::TrackRef const& trackR
     // Apply the PF hadron calibration only when a closest linked HCAL cluster
     // is available, using the HCAL cluster position as in PFAlgo.
     if (hasLinkedHCAL) {
+      bool const hasMatchedPFCandidate = (matchedPFCandidate != nullptr);
+      bool const hasMatchedChargedHadron =
+          hasMatchedPFCandidate &&
+          matchedPFCandidate->particleId() == reco::PFCandidate::h;
+
+      hcalLinkedPFCandidateMatchEfficiencyVsPVarBins_->Fill(
+          track.p(), hasMatchedPFCandidate);
+      hcalLinkedChargedHadronEfficiencyVsPVarBins_->Fill(
+          track.p(), hasMatchedChargedHadron);
+
+      if (matchedPFCandidate != nullptr) {
+        double const hcalLinkedPFCandidateResponse =
+            (matchedPFCandidate->ecalEnergy() + matchedPFCandidate->hcalEnergy()) /
+            track.p();
+
+        double const hcalLinkedRawPFCandidateResponse =
+            (matchedPFCandidate->rawEcalEnergy() + matchedPFCandidate->rawHcalEnergy()) /
+            track.p();
+
+        meanHCALLinkedPFCandidateResponseVsPVarBins_->Fill(
+            track.p(), hcalLinkedPFCandidateResponse);
+
+        hcalLinkedPFCandidateResponseVsPVarBins_->Fill(
+            track.p(), hcalLinkedPFCandidateResponse);
+
+        meanHCALLinkedRawPFCandidateResponseVsPVarBins_->Fill(
+            track.p(), hcalLinkedRawPFCandidateResponse);
+
+        hcalLinkedRawPFCandidateResponseVsPVarBins_->Fill(
+            track.p(), hcalLinkedRawPFCandidateResponse);
+      }
+
       prePFHadronCalibrationLinkedECALEnergy_->Fill(linkedECALEnergy);
       prePFHadronCalibrationLinkedHCALEnergy_->Fill(linkedHCALEnergy);
       prePFHadronCalibrationLinkedECALPlusHCALEnergy_->Fill(linkedECALPlusHCALEnergy);
@@ -1531,6 +2786,53 @@ void SPRLowPUDataAnalyzer::fillPFLinkingDiagnostics(reco::TrackRef const& trackR
           track.eta(), pfHadronCalibratedLinkedECALPlusHCALResponse);
       meanPFHadronCalibratedLinkedECALPlusHCALResponseVsPFBlockTracks_->Fill(
           numberOfTrackElements, pfHadronCalibratedLinkedECALPlusHCALResponse);
+      // Compare PF-candidate and separately calibrated linked-cluster
+      // responses on the same HCAL-linked, PF-matched tracks.
+      if (matchedPFCandidate != nullptr) {
+        bool const simplePFBlock =
+            numberOfTrackElements == 1 &&
+            numberOfHCALElements == 1 &&
+            numberOfECALElements <= 1;
+
+        double const pfResponse =
+            (matchedPFCandidate->ecalEnergy() +
+             matchedPFCandidate->hcalEnergy()) / track.p();
+
+        double const deltaResponse =
+            pfResponse - pfHadronCalibratedLinkedECALPlusHCALResponse;
+
+        if (numberOfTrackElements >= 2) {
+          if (sharedClosestHCAL) {
+            meanDeltaResponseSharedHCALVsP_->Fill(
+                track.p(), deltaResponse);
+          } else {
+            meanDeltaResponseNonSharedHCALVsP_->Fill(
+                track.p(), deltaResponse);
+          }
+
+          meanDeltaResponseMultiTrackBlockVsP_->Fill(
+              track.p(), deltaResponse);
+        } else if (numberOfHCALElements >= 2) {
+          meanDeltaResponseMultiHCALBlockVsP_->Fill(
+              track.p(), deltaResponse);
+        } else if (numberOfECALElements >= 2) {
+          meanDeltaResponseMultiECALBlockVsP_->Fill(
+              track.p(), deltaResponse);
+        }
+
+        if (simplePFBlock) {
+          meanPFResponseSimpleBlockVsP_->Fill(track.p(), pfResponse);
+          meanDeltaResponseSimpleBlockVsP_->Fill(track.p(), deltaResponse);
+          meanLinkedResponseSimpleBlockVsP_->Fill(
+              track.p(), pfHadronCalibratedLinkedECALPlusHCALResponse);
+        } else {
+          meanPFResponseComplexBlockVsP_->Fill(track.p(), pfResponse);
+          meanDeltaResponseComplexBlockVsP_->Fill(track.p(), deltaResponse);
+          meanLinkedResponseComplexBlockVsP_->Fill(
+              track.p(), pfHadronCalibratedLinkedECALPlusHCALResponse);
+        }
+      }
+
       if (requirePrimaryVertex_) {
         pfHadronCalibratedLinkedECALPlusHCALResponseVsGoodVertices_->Fill(
             numberOfGoodVertices, pfHadronCalibratedLinkedECALPlusHCALResponse);
@@ -1595,9 +2897,15 @@ void SPRLowPUDataAnalyzer::fillPFLinkingDiagnostics(reco::TrackRef const& trackR
 
 void SPRLowPUDataAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& descriptions) {
   edm::ParameterSetDescription description;
+  description.add<bool>("doV0Tagging", false);
+  description.add<edm::InputTag>(
+      "lambdas", edm::InputTag("generalV0Candidates", "Lambda"));
+  description.add<edm::InputTag>(
+      "kshorts", edm::InputTag("generalV0Candidates", "Kshort"));
   description.add<edm::InputTag>("tracks", edm::InputTag("generalTracks"));
   description.add<edm::InputTag>("vertices", edm::InputTag("offlinePrimaryVertices"));
   description.add<edm::InputTag>("pfBlocks", edm::InputTag("particleFlowBlock"));
+  description.add<edm::InputTag>("pfCandidates", edm::InputTag("particleFlow"));
   description.add<edm::InputTag>("muons", edm::InputTag("muons"));
   description.add<bool>("requirePrimaryVertex", true);
   description.add<double>("minVertexNdof", 4.0);
@@ -1606,6 +2914,8 @@ void SPRLowPUDataAnalyzer::fillDescriptions(edm::ConfigurationDescriptions& desc
   description.add<std::string>("trackQuality", "highPurity");
   description.add<double>("minTrackPt", 1.0);
   description.add<double>("minTrackP", 3.0);
+  description.add<double>("minV0TrackPt", 1.0);
+  description.add<double>("minV0TrackP", 3.0);
   description.add<double>("maxTrackAbsEta", 1.0);
   description.add<double>("maxTrackNormalizedChi2", 5.0);
   description.add<double>("maxTrackRelativePError", 0.1);
