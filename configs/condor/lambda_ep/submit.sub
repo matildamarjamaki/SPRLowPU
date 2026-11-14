@@ -1,0 +1,18 @@
+universe = vanilla
+
+executable = run_job.sh
+arguments = $(Process)
+
+output = logs/job_$(Process).out
+error = logs/job_$(Process).err
+log = logs/condor.log
+
+x509userproxy = /afs/cern.ch/user/m/mmarjama/myProxy
+
+request_cpus = 1
+request_memory = 2500MB
+request_disk = 4GB
+
++JobFlavour = "workday"
+
+queue 64

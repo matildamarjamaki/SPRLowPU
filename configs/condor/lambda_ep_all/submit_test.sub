@@ -1,0 +1,17 @@
+universe = vanilla
+
+executable = run_job.sh
+arguments = 1 0
+
+output = logs/test_1_0.out
+error = logs/test_1_0.err
+log = logs/test_condor.log
+
+request_cpus = 1
+request_memory = 2500MB
+request_disk = 4GB
+
++JobFlavour = "workday"
+
+x509userproxy = /afs/cern.ch/user/m/mmarjama/myProxy
+queue 1

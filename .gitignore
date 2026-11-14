@@ -1,0 +1,75 @@
+# Large scientific data
+*.root
+*.hepmc
+*.hepmc3
+*.lhe
+*.lhe.gz
+*.ntuple
+*.h5
+*.hdf5
+*.parquet
+
+# Build products
+build/
+install/
+*.o
+*.so
+*.a
+*.pcm
+*.d
+*.pyc
+__pycache__/
+CMakeFiles/
+autom4te.cache/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.swp
+*.swo
+core
+core.*
+
+# LaTeX build products
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.toc
+*.out
+*.nav
+*.snm
+
+# Large inventories
+local_file_inventory.txt
+research_files_filtered.txt
+
+# Figures and binary documents: add selected files explicitly later
+*.png
+*.jpg
+*.jpeg
+*.pdf
+
+# Local and sensitive configuration
+.env
+.env.*
+*.pem
+*.key
+id_rsa
+id_ed25519
+
+# Local source backups and intermediate versions
+*.bak
+*.bak_*
+*.backup
+*.backup_*
+*.before_*
+*.backup_20*
+*_WRONG_BACKUP.*
+
+# Generated plots and output directories
+plots/
+results/
+outputs/
